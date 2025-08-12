@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 // NOTE: Replaced custom Select with a reliable native <select> for desktop (Tauri) compatibility
 import * as htmlToImage from "html-to-image";
 import jsPDF from "jspdf";
+import Review from "@/components/Review";
 
 const cx = (...cls) => cls.filter(Boolean).join(" ");
 const isTauri = () => typeof window !== "undefined" && (window.__TAURI__ || window.__TAURI_IPC__ || window.__TAURI_INTERNALS__);
@@ -371,6 +372,7 @@ export default function MoodboardMaker() {
               </div>
             </CardContent>
           </Card>
+          <Review />
         </div>
       </div>
       {cropOpenId && (
