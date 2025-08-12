@@ -17,9 +17,12 @@ const isTauri = () => typeof window !== "undefined" && (window.__TAURI__ || wind
 const withDefaultCrop = (img) => ({
   colSpan: img?.colSpan ?? 1,
   rowSpan: img?.rowSpan ?? 1,
-  crop: { x: 50, y: 50, zoom: 1 },
   ...img,
-  crop: { x: img?.crop?.x ?? 50, y: img?.crop?.y ?? 50, zoom: img?.crop?.zoom ?? 1 }
+  crop: {
+    x: img?.crop?.x ?? 50,
+    y: img?.crop?.y ?? 50,
+    zoom: img?.crop?.zoom ?? 1,
+  },
 });
 
 export default function MoodboardMaker() {
@@ -168,8 +171,10 @@ export default function MoodboardMaker() {
       if (!dataUrl) throw new Error("Export failed. Try smaller board or local images.");
       if (isTauri()) {
         const bytes = dataUrlToBytes(dataUrl);
-        const { save } = await import("@tauri-apps/api/dialog");
-        const { writeBinaryFile } = await import("@tauri-apps/api/fs");
+        const dialogMod = "@tauri-apps/api/dialog";
+        const fsMod = "@tauri-apps/api/fs";
+        const { save } = await import(/* @vite-ignore */ dialogMod);
+        const { writeBinaryFile } = await import(/* @vite-ignore */ fsMod);
         const path = await save({ defaultPath: `moodboard.${exportFormat}` });
         if (path) await writeBinaryFile({ path, contents: bytes });
       } else {
@@ -192,8 +197,10 @@ export default function MoodboardMaker() {
       const scale = Math.min(maxW / img.width, maxH / img.height); const w = img.width * scale; const h = img.height * scale;
       const x = (pageW - w) / 2; const y = (pageH - h) / 2; pdf.addImage(png, "PNG", x, y, w, h);
       if (isTauri()) {
-        const { save } = await import("@tauri-apps/api/dialog");
-        const { writeBinaryFile } = await import("@tauri-apps/api/fs");
+        const dialogMod = "@tauri-apps/api/dialog";
+        const fsMod = "@tauri-apps/api/fs";
+        const { save } = await import(/* @vite-ignore */ dialogMod);
+        const { writeBinaryFile } = await import(/* @vite-ignore */ fsMod);
         const ab = pdf.output("arraybuffer");
         const path = await save({ defaultPath: "moodboard.pdf" });
         if (path) await writeBinaryFile({ path, contents: new Uint8Array(ab) });
