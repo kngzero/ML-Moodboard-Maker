@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-const base = process.env.VITE_BASE_PATH || '/ML-Moodboard-Maker/'
+const base = process.env.VITE_BASE_PATH || '/method-mosaic/'
 
 export default defineConfig({
   base,

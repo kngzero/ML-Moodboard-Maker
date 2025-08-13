@@ -10,9 +10,9 @@ export default function Review() {
     const username = window.location.hostname.includes("github.io")
       ? window.location.hostname.split(".")[0]
       : "openai";
-    const repo = "ML-Moodboard-Maker";
+    const repo = "Method-Mosaic";
     const url = `https://github.com/${username}/${repo}/issues/new?title=${encodeURIComponent(
-      "Review: ML Moodboard Maker"
+        "Review: Method Mosaic"
     )}&body=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
