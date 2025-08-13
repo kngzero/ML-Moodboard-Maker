@@ -169,6 +169,25 @@ export default function MoodboardMaker() {
 
   const clearAll = () => { setImages([]); originalOrderRef.current = []; };
   const removeImage = (id) => { setImages((prev) => prev.filter((i) => i.id !== id)); originalOrderRef.current = originalOrderRef.current.filter((x) => x !== id); };
+  const replaceImage = (id) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const asset = await readFileAsAsset(file);
+      setAssets((prev) => [...prev, asset]);
+      setImages((prev) =>
+        prev.map((im) =>
+          im.id === id
+            ? withDefaultCrop({ ...im, src: asset.src, w: asset.w, h: asset.h, assetId: asset.id })
+            : im
+        )
+      );
+    };
+    input.click();
+  };
 
   const onLogoFiles = async (files) => {
     if (!files?.[0]) return; const file = files[0]; const src = await readFileAsDataURL(file); setLogoSrc(src);
@@ -444,6 +463,7 @@ export default function MoodboardMaker() {
                           {layoutMode === "square" ? (<img src={img.src} alt="mood" className="block w-full h-full select-none object-cover" style={{ objectPosition: `${crop.x}% ${crop.y}%`, transform: `scale(${crop.zoom})`, transformOrigin: "center center" }} draggable={false}/>) : (<img src={img.src} alt="mood" className={cx("block w-full h-auto select-none", layoutMode === "grid" ? "object-cover" : "")} style={layoutMode === "grid" ? { aspectRatio: `${img.w || 4} / ${img.h || 3}` } : undefined} draggable={false}/>)}
                           <div data-export-exclude className="absolute inset-x-2 top-2 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             {layoutMode === "square" && (<Button size="sm" variant="secondary" className="h-8" onClick={() => openCrop(img.id)}>Crop</Button>)}
+                            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => replaceImage(img.id)}><ImageIcon className="h-4 w-4"/></Button>
                             <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => removeImage(img.id)}><Trash2 className="h-4 w-4"/></Button>
                           </div>
                           {layoutMode === "square" && (
