@@ -78,7 +78,7 @@ export default function MoodboardMaker() {
     } catch (err) {
       if (err && (err.name === "QuotaExceededError" || err.code === 22)) {
         if (!isTauri()) {
-          alert("Storage limit reached. Please remove some images to continue.");
+          // alert("Storage limit reached. Please remove some images to continue.");
         }
         console.warn("Failed to persist assets: storage quota exceeded");
       } else {
