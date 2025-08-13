@@ -66,8 +66,9 @@ export default function MoodboardMaker() {
     if (layoutMode === "auto") return { columnCount: columns, columnGap: `${gap}px` };
     const base = { display: "grid", gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: `${gap}px` };
     if (layoutMode === "square") return { ...base, gridAutoRows: `${gridCell}px` };
+    if (layoutMode === "grid") return { ...base, gridTemplateRows: `repeat(${rows}, 1fr)` };
     return base;
-  }, [layoutMode, columns, gap, gridCell]);
+  }, [layoutMode, columns, gap, gridCell, rows]);
   const itemStyle = useMemo(() => ({
     marginBottom: layoutMode === "auto" ? `${gap}px` : undefined,
     breakInside: layoutMode === "auto" ? "avoid" : undefined,
