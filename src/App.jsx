@@ -204,25 +204,6 @@ export default function MoodboardMaker() {
 
   const clearAll = () => { setImages([]); originalOrderRef.current = []; };
   const removeImage = (id) => { setImages((prev) => prev.filter((i) => i.id !== id)); originalOrderRef.current = originalOrderRef.current.filter((x) => x !== id); };
-  const replaceImage = (id) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const asset = await readFileAsAsset(file);
-      setAssets((prev) => [...prev, asset]);
-      setImages((prev) =>
-        prev.map((im) =>
-          im.id === id
-            ? withDefaultCrop({ ...im, src: asset.src, w: asset.w, h: asset.h, assetId: asset.id })
-            : im
-        )
-      );
-    };
-    input.click();
-  };
 
   const onLogoFiles = async (files) => {
     if (!files?.[0]) return; const file = files[0]; const src = await readFileAsDataURL(file); setLogoSrc(src);
