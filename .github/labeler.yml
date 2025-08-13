@@ -1,0 +1,9 @@
+# .github/labeler.yml
+web:
+  - 'src/**'
+desktop:
+  - 'src-tauri/**'
+docs:
+  - 'docs/**'
+build:
+  - '.github/**'
