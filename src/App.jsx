@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import * as htmlToImage from "html-to-image";
 import jsPDF from "jspdf";
 import Review from "@/components/Review";
+import AssetPanel from "@/components/AssetPanel";
 
 const cx = (...cls) => cls.filter(Boolean).join(" ");
 const isTauri = () => typeof window !== "undefined" && (window.__TAURI__ || window.__TAURI_IPC__ || window.__TAURI_INTERNALS__);
@@ -28,6 +29,8 @@ const withDefaultCrop = (img) => ({
 
 export default function MoodboardMaker() {
   const [images, setImages] = useState(/** @type {BoardImage[]} */([]));
+  const [assets, setAssets] = useState([]);
+  const [assetPanelOpen, setAssetPanelOpen] = useState(false);
   const originalOrderRef = useRef([]);
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -62,6 +65,16 @@ export default function MoodboardMaker() {
   const spanDragRef = useRef(null);
   const [gridCell, setGridCell] = useState(120);
   const canReorder = layoutMode !== "auto";
+
+  useEffect(() => {
+    const stored = localStorage.getItem("assets");
+    if (stored) {
+      try { setAssets(JSON.parse(stored)); } catch {}
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("assets", JSON.stringify(assets));
+  }, [assets]);
   const layoutStyle = useMemo(() => {
     if (layoutMode === "auto") return { columnCount: columns, columnGap: `${gap}px` };
     const base = { display: "grid", gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: `${gap}px` };
@@ -75,44 +88,72 @@ export default function MoodboardMaker() {
     cursor: canReorder ? "grab" : "default",
   }), [gap, layoutMode, canReorder]);
 
+  const addImageFromAsset = useCallback((asset) => {
+    setImages((prev) => {
+      const id = crypto.randomUUID();
+      const boardImg = withDefaultCrop({ id, src: asset.src, w: asset.w, h: asset.h, assetId: asset.id });
+      originalOrderRef.current = [...originalOrderRef.current, id];
+      return [...prev, boardImg];
+    });
+  }, []);
+
   const onDrop = useCallback(async (evt) => {
     evt.preventDefault();
+    const assetId = evt.dataTransfer.getData("application/x-asset-id");
+    if (assetId) {
+      const asset = assets.find((a) => a.id === assetId);
+      if (asset) addImageFromAsset(asset);
+      return;
+    }
     const isInternalMove = (evt.dataTransfer.types || []).includes("text/plain");
     if (isInternalMove) return;
     const files = Array.from(evt.dataTransfer.files || []).filter((f) => /image\/(png|jpe?g|webp|gif|bmp|svg)/i.test(f.type));
     if (!files.length) return;
-    const newItems = await Promise.all(files.map(readFileAsImage));
-    setImages((prev) => {
-      const updated = [...prev, ...newItems.map(withDefaultCrop)];
-      originalOrderRef.current = [...originalOrderRef.current, ...newItems.map((n) => n.id)];
-      return updated;
-    });
-  }, []);
+    const newAssets = await Promise.all(files.map(readFileAsAsset));
+    setAssets((prev) => [...prev, ...newAssets]);
+    newAssets.forEach(addImageFromAsset);
+  }, [assets, addImageFromAsset]);
 
   const onPaste = useCallback(async (evt) => {
     const items = Array.from(evt.clipboardData.items || []);
-    const imagesFromClipboard = await Promise.all(
-      items.filter((i) => i.type.startsWith("image/")).map(async (i) => { const f = i.getAsFile(); if (!f) return null; return await readFileAsImage(f); })
+    const assetsFromClipboard = await Promise.all(
+      items.filter((i) => i.type.startsWith("image/")).map(async (i) => { const f = i.getAsFile(); if (!f) return null; return await readFileAsAsset(f); })
     );
-    const filtered = imagesFromClipboard.filter(Boolean);
+    const filtered = assetsFromClipboard.filter(Boolean);
     if (!filtered.length) return;
-    setImages((prev) => {
-      const updated = [...prev, ...filtered.map(withDefaultCrop)];
-      originalOrderRef.current = [...originalOrderRef.current, ...filtered.map((n) => n.id)];
-      return updated;
-    });
-  }, []);
+    setAssets((prev) => [...prev, ...filtered]);
+    filtered.forEach(addImageFromAsset);
+  }, [addImageFromAsset]);
 
-  const onDragOverBoard = (e) => { e.preventDefault(); const t = e.dataTransfer.types || []; if (t.includes("text/plain")) e.dataTransfer.dropEffect = "move"; else if (t.includes("Files")) e.dataTransfer.dropEffect = "copy"; };
+  const onDragOverBoard = (e) => {
+    e.preventDefault();
+    const t = e.dataTransfer.types || [];
+    if (t.includes("text/plain")) e.dataTransfer.dropEffect = "move";
+    else if (t.includes("Files") || t.includes("application/x-asset-id")) e.dataTransfer.dropEffect = "copy";
+  };
 
   const handleFiles = async (files) => {
-    if (!files) return; const arr = await Promise.all(Array.from(files).map(readFileAsImage));
-    setImages((prev) => { const updated = [...prev, ...arr.map(withDefaultCrop)]; originalOrderRef.current = [...originalOrderRef.current, ...arr.map((n) => n.id)]; return updated; });
+    if (!files) return;
+    const arr = await Promise.all(Array.from(files).map(readFileAsAsset));
+    setAssets((prev) => [...prev, ...arr]);
+    arr.forEach(addImageFromAsset);
   };
 
   const addFromUrl = async () => {
-    const url = prompt("Paste an image URL"); if (!url) return; const id = crypto.randomUUID(); const dims = await getImageSize(url);
-    setImages((prev) => { originalOrderRef.current = [...originalOrderRef.current, id]; return [...prev, withDefaultCrop({ id, src: url, ...dims })]; });
+    const url = prompt("Paste an image URL");
+    if (!url) return;
+    let src = url;
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      src = await readFileAsDataURL(blob);
+    } catch (err) {
+      if (!isTauri()) alert("Couldn't fetch image; it may be blocked by CORS.");
+    }
+    const dims = await getImageSize(src);
+    const asset = { id: crypto.randomUUID(), src, ...dims, name: url.split("/").pop() || "image" };
+    setAssets((prev) => [...prev, asset]);
+    addImageFromAsset(asset);
   };
 
   const clearAll = () => { setImages([]); originalOrderRef.current = []; };
@@ -216,7 +257,11 @@ export default function MoodboardMaker() {
   async function blobToDataURL(blob) { return await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); }); }
   function dataUrlToBytes(dataUrl) { const [meta, b64] = dataUrl.split(","); const bin = atob(b64); const bytes = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i); return bytes; }
   async function readFileAsDataURL(file){ return await new Promise((res, rej)=>{ const fr = new FileReader(); fr.onload = ()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); }); }
-  async function readFileAsImage(file) { const src = await readFileAsDataURL(file); const { w, h } = await getImageSize(src); return { id: crypto.randomUUID(), src, w, h }; }
+  async function readFileAsAsset(file) {
+    const src = await readFileAsDataURL(file);
+    const { w, h } = await getImageSize(src);
+    return { id: crypto.randomUUID(), src, w, h, name: file.name || "image" };
+  }
   async function getImageSize(src){ return await new Promise((resolve, reject)=>{ const img = new Image(); img.onload = ()=>resolve({ w: img.naturalWidth, h: img.naturalHeight }); img.onerror = reject; img.src = src; }); }
   useEffect(() => { const onKey = (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); handleExport(); } }; window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey); }, [exportFormat]);
   const openCrop = (id) => { const img = images.find((i) => i.id === id); const c = withDefaultCrop(img).crop; setTempCrop({ ...c }); setCropOpenId(id); };
@@ -335,7 +380,12 @@ export default function MoodboardMaker() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold tracking-tight">Drag & Drop Moodboard</h1>
-            <div className="text-sm text-neutral-500">Drop images • Paste • {canReorder ? "Drag tiles to reorder" : "Switch to Grid or Square to reorder"} • Reset order</div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setAssetPanelOpen(true)}>
+                <LayoutGrid className="h-4 w-4 mr-1" />Assets
+              </Button>
+              <div className="text-sm text-neutral-500">Drop images • Paste • {canReorder ? "Drag tiles to reorder" : "Switch to Grid or Square to reorder"} • Reset order</div>
+            </div>
           </div>
           <Card className="rounded-2xl shadow-xl">
             <CardContent className="p-4 md:p-6">
@@ -378,6 +428,7 @@ export default function MoodboardMaker() {
           <Review />
         </div>
       </div>
+      <AssetPanel assets={assets} open={assetPanelOpen} onClose={() => setAssetPanelOpen(false)} />
       {cropOpenId && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onMouseUp={onPreviewMouseUpLeave} onMouseLeave={onPreviewMouseUpLeave}>
           <div className="w-full max-w-[720px] bg-white dark:bg-neutral-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-neutral-700 p-6">
