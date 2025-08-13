@@ -348,6 +348,37 @@ export default function MoodboardMaker() {
   function getCellPx(){ const el = gridRef.current; if(!el) return gridCell; const w = el.clientWidth || 600; const cell = Math.max(40, Math.floor((w - gap*(columns - 1)) / columns)); return cell; }
   useEffect(()=>{ function update(){ setGridCell(getCellPx()); } update(); const ro = new ResizeObserver(update); if(gridRef.current) ro.observe(gridRef.current); window.addEventListener("resize", update); return ()=>{ window.removeEventListener("resize", update); ro.disconnect(); }; }, [columns, gap]);
 
+  const Header = () => (
+    <header className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-2">
+        <svg viewBox="0 0 24 24" className="h-6 w-6 text-indigo-500" fill="currentColor" aria-hidden="true">
+          <rect x="1" y="1" width="10" height="10" rx="2" />
+          <rect x="13" y="1" width="10" height="10" rx="2" />
+          <rect x="1" y="13" width="10" height="10" rx="2" />
+          <rect x="13" y="13" width="10" height="10" rx="2" />
+        </svg>
+        <h1 className="text-2xl font-semibold tracking-tight">Drag & Drop Moodboard</h1>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+          <Upload className="h-4 w-4 mr-1" />Add Images
+        </Button>
+        <Button variant="outline" size="sm" onClick={addFromUrl}>
+          <ImagePlus className="h-4 w-4 mr-1" />From URL
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setAssetPanelOpen(true)}>
+          <LayoutGrid className="h-4 w-4 mr-1" />Assets
+        </Button>
+        <Button variant="ghost" size="sm" onClick={resetOrder}>
+          <RotateCcw className="h-4 w-4 mr-1" />Reset Order
+        </Button>
+        <Button variant="destructive" size="sm" onClick={clearAll}>
+          <Trash2 className="h-4 w-4 mr-1" />Clear All
+        </Button>
+      </div>
+    </header>
+  );
+
   return (
     <div className="min-h-screen w-full bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 p-4 md:p-6 lg:p-8">
       <div className="max-w-[1400px] mx-auto grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
@@ -433,28 +464,12 @@ export default function MoodboardMaker() {
               </div>
               <p className="text-xs text-neutral-500">Tip: Press ⌘/Ctrl + S to quick-save using the selected image format.</p>
             </div>
-            <div className="border-t pt-4 space-y-3">
-              <Label className="text-sm">Manage</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full"><Upload className="h-4 w-4 mr-2"/>Add Images</Button>
-                <Button variant="outline" onClick={addFromUrl} className="w-full"><ImagePlus className="h-4 w-4 mr-2"/>From URL</Button>
-                <Button variant="ghost" onClick={resetOrder} className="w-full"><RotateCcw className="h-4 w-4 mr-2"/>Reset Order</Button>
-                <Button variant="destructive" onClick={clearAll} className="w-full"><Trash2 className="h-4 w-4 mr-2"/>Clear All</Button>
-              </div>
-              <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
-            </div>
           </CardContent>
         </Card>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight">Drag & Drop Moodboard</h1>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setAssetPanelOpen(true)}>
-                <LayoutGrid className="h-4 w-4 mr-1" />Assets
-              </Button>
-              <div className="text-sm text-neutral-500">Drop images • Paste • {canReorder ? "Drag tiles to reorder" : "Switch to Grid or Square to reorder"} • Reset order</div>
-            </div>
-          </div>
+          <Header />
+          <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+          <p className="text-sm text-neutral-500">Drop images • Paste • {canReorder ? "Drag tiles to reorder" : "Switch to Grid or Square to reorder"} • Reset order</p>
           <Card className="rounded-2xl shadow-xl">
             <CardContent className="p-4 md:p-6">
               <div className={cx("relative w-full min-h-[60vh] bg-white/90 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl", images.length === 0 ? "grid place-items-center" : "")} onDrop={onDrop} onDragOver={onDragOverBoard} onPaste={onPaste}>
