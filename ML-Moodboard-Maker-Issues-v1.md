@@ -250,27 +250,3 @@ This slider is confusing outside **Grid** mode. Either hide in other modes or re
 **Labels**: ux, cleanup
 
 ---
-
-### Appendix — Optional bulk creation with GitHub CLI
-If you want to create issues quickly from this doc, run (inside your repo) and paste each section’s body when prompted:
-```bash
-gh issue create --title "feat: Undo / Redo (history)"
-gh issue create --title "feat: Multi-select & bulk actions"
-gh issue create --title "feat: Snap grid & smart guides"
-gh issue create --title "feat: Span-resize in Grid mode (parity with Flexible grid)"
-gh issue create --title "feat: Lock / Hide per tile"
-gh issue create --title "feat: Replace image in place"
-gh issue create --title "feat: Branding presets (header layouts)"
-gh issue create --title "feat: Export presets (1×/2×/3×, transparent PNG, multi-page PDF)"
-gh issue create --title "feat: Canvas-based exporter (reduce html-to-image flakiness)"
-gh issue create --title "feat: Project save/load format (.mlmboard)"
-gh issue create --title "feat: Autosave & recovery"
-gh issue create --title "feat: Templates library (IG, A4/A3, 16:9, Pinterest)"
-gh issue create --title "feat: Asset panel (thumbnails, recent, drag-to-place)"
-gh issue create --title "perf: Virtualized rendering for large boards"
-gh issue create --title "feat: Palette extraction & background suggestions"
-gh issue create --title "refactor: Extract core board logic to a reusable module"
-gh issue create --title "test: Playwright end-to-end tests"
-gh issue create --title "ci: GitHub Actions: Pages deploy + Tauri release on tags"
-gh issue create --title "ux: Remove or rethink “Rows (visual)” control"
-```
