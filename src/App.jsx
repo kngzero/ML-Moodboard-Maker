@@ -28,7 +28,7 @@ const withDefaultCrop = (img) => ({
   },
 });
 
-export default function MoodboardMaker() {
+export default function MethodMosaic() {
   const [images, setImages] = useState(/** @type {BoardImage[]} */([]));
   const [assets, setAssets] = useState([]);
   const [assetPanelOpen, setAssetPanelOpen] = useState(false);
@@ -371,13 +371,15 @@ export default function MoodboardMaker() {
   const Header = () => (
     <header className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-2">
-        <svg viewBox="0 0 24 24" className="h-6 w-6 text-indigo-500" fill="currentColor" aria-hidden="true">
-          <rect x="1" y="1" width="10" height="10" rx="2" />
-          <rect x="13" y="1" width="10" height="10" rx="2" />
-          <rect x="1" y="13" width="10" height="10" rx="2" />
-          <rect x="13" y="13" width="10" height="10" rx="2" />
+        <svg
+          viewBox="0 0 40 40"
+          className="h-6 w-6 text-indigo-500"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M11.25 15H6.25C5.55977 15 5 15.5598 5 16.25V18.75C5 19.4402 5.55977 20 6.25 20H11.25C11.9402 20 12.5 19.4402 12.5 18.75V16.25C12.5 15.5598 11.9402 15 11.25 15ZM22.5 27.5H17.5C16.8098 27.5 16.25 28.0598 16.25 28.75V33.75C16.25 34.4402 16.8098 35 17.5 35H22.5C23.1902 35 23.75 34.4402 23.75 33.75V28.75C23.75 28.0598 23.1902 27.5 22.5 27.5ZM12.5 33.75V23.75C12.5 23.0598 11.9402 22.5 11.25 22.5H6.25C5.55977 22.5 5 23.0598 5 23.75V33.75C5 34.4402 5.55977 35 6.25 35H11.25C11.9402 35 12.5 34.4402 12.5 33.75ZM22.5 20H17.5C16.8098 20 16.25 20.5598 16.25 21.25V23.75C16.25 24.4402 16.8098 25 17.5 25H22.5C23.1902 25 23.75 24.4402 23.75 23.75V21.25C23.75 20.5598 23.1902 20 22.5 20ZM33.75 15H28.75C28.0598 15 27.5 15.5598 27.5 16.25V18.75C27.5 19.4402 28.0598 20 28.75 20H33.75C34.4402 20 35 19.4402 35 18.75V16.25C35 15.5598 34.4402 15 33.75 15ZM22.5 5H17.5C16.8098 5 16.25 5.55977 16.25 6.25V16.25C16.25 16.9402 16.8098 17.5 17.5 17.5H22.5C23.1902 17.5 23.75 16.9402 23.75 16.25V6.25C23.75 5.55977 23.1902 5 22.5 5ZM11.25 5H6.25C5.55977 5 5 5.55977 5 6.25V11.25C5 11.9402 5.55977 12.5 6.25 12.5H11.25C11.9402 12.5 12.5 11.9402 12.5 11.25V6.25C12.5 5.55977 11.9402 5 11.25 5ZM33.75 5H28.75C28.0598 5 27.5 5.55977 27.5 6.25V11.25C27.5 11.9402 28.0598 12.5 28.75 12.5H33.75C34.4402 12.5 35 11.9402 35 11.25V6.25C35 5.55977 34.4402 5 33.75 5ZM33.75 22.5H28.75C28.0598 22.5 27.5 23.0598 27.5 23.75V33.75C27.5 34.4402 28.0598 35 28.75 35H33.75C34.4402 35 35 34.4402 35 33.75V23.75C35 23.0598 34.4402 22.5 33.75 22.5Z" />
         </svg>
-        <h1 className="text-2xl font-semibold tracking-tight">Drag & Drop Moodboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Method Mosaic</h1>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
@@ -409,7 +411,7 @@ export default function MoodboardMaker() {
               ref={infoRef}
               className="absolute right-0 mt-2 w-64 rounded-md border border-neutral-200 bg-white p-3 text-left text-sm shadow-md dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <h3 className="font-medium">Drag & Drop Moodboard</h3>
+              <h3 className="font-medium">Method Mosaic</h3>
               <p className="mt-1 mb-2 text-neutral-600">
                 Arrange images and export your moodboard.
               </p>

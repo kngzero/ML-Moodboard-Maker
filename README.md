@@ -1,7 +1,9 @@
-# ML Moodboard Maker
+# Method Mosaic
+
+![Method Mosaic logo](./logo.svg)
 
 ## Introduction
-ML Moodboard Maker is a simple web application for quickly assembling moodboards from your favorite images. Drag assets into the workspace, shuffle layouts, and experiment with branding to find the right look.
+Method Mosaic is a simple web application for quickly assembling moodboards from your favorite images. Drag assets into the workspace, shuffle layouts, and experiment with branding to find the right look.
 
 The project aims to make visual exploration painless so you can collect inspiration and share polished boards in minutes.
 
