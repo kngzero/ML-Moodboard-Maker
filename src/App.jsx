@@ -246,10 +246,32 @@ export default function MoodboardMaker() {
       if (!png) throw new Error("Could not render board to image");
       const img = new Image(); img.src = png; await img.decode();
       const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-      const pageW = pdf.internal.pageSize.getWidth(); const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 24; const maxW = pageW - margin * 2; const maxH = pageH - margin * 2;
-      const scale = Math.min(maxW / img.width, maxH / img.height); const w = img.width * scale; const h = img.height * scale;
-      const x = (pageW - w) / 2; const y = (pageH - h) / 2; pdf.addImage(png, "PNG", x, y, w, h);
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 24;
+      const maxW = pageW - margin * 2;
+      const maxH = pageH - margin * 2;
+      const scale = Math.min(1, maxW / img.width);
+      const scaledW = Math.round(img.width * scale);
+      const scaledH = Math.round(img.height * scale);
+      const pages = Math.max(1, Math.ceil(scaledH / maxH));
+      const x = Math.round((pageW - scaledW) / 2);
+      for (let i = 0; i < pages; i++) {
+        const sy = Math.round((i * maxH) / scale);
+        const sh = i === pages - 1
+          ? img.height - sy
+          : Math.min(Math.round(maxH / scale), img.height - sy);
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = img.width;
+        sliceCanvas.height = sh;
+        const ctx = sliceCanvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas not supported");
+        ctx.drawImage(img, 0, sy, img.width, sh, 0, 0, img.width, sh);
+        const data = sliceCanvas.toDataURL("image/png");
+        const h = Math.round(sh * scale);
+        pdf.addImage(data, "PNG", x, margin, scaledW, h);
+        if (i < pages - 1) pdf.addPage();
+      }
       if (isTauri()) {
         const dialogMod = "@tauri-apps/api/dialog";
         const fsMod = "@tauri-apps/api/fs";
