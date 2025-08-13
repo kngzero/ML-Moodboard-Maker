@@ -12,6 +12,7 @@ import jsPDF from "jspdf";
 import Review from "@/components/Review";
 import AssetPanel from "@/components/AssetPanel";
 import TemplateSelector, { TEMPLATES } from "@/components/TemplateSelector";
+import SafeMarginOverlay from "@/components/SafeMarginOverlay";
 import pkg from "../package.json";
 
 const cx = (...cls) => cls.filter(Boolean).join(" ");
@@ -53,6 +54,7 @@ export default function MethodMosaic() {
   const [layoutMode, setLayoutMode] = useState("auto");
   const [rounded, setRounded] = useState(true);
   const [shadow, setShadow] = useState(true);
+  const [showSafeMargin, setShowSafeMargin] = useState(false);
   const [boardPadding, setBoardPadding] = useState(24);
   const [selectedTemplate, setSelectedTemplate] = useState("custom");
   const [boardWidth, setBoardWidth] = useState(null);
@@ -524,6 +526,7 @@ export default function MethodMosaic() {
                   <div className="flex items-center gap-2"><Switch checked={rounded} onCheckedChange={setRounded} id="rounded"/><Label htmlFor="rounded">Rounded corners</Label></div>
                   <div className="flex items-center gap-2"><Switch checked={shadow} onCheckedChange={setShadow} id="shadow"/><Label htmlFor="shadow">Soft shadow</Label></div>
                 </div>
+                <div className="flex items-center gap-2"><Switch checked={showSafeMargin} onCheckedChange={setShowSafeMargin} id="safe-margin"/><Label htmlFor="safe-margin">Show safe margin</Label></div>
                 <div className="space-y-2"><Label className="text-sm">Background</Label><div className="flex items-center gap-3"><Input type="color" value={bg} onChange={(e) => setBg(e.target.value)} className="w-16 h-10 p-1 cursor-pointer"/><Input type="text" value={bg} onChange={(e) => setBg(e.target.value)} /></div></div>
               </>)}
             </div>
@@ -551,21 +554,21 @@ export default function MethodMosaic() {
             <CardContent className="p-4 md:p-6">
               <div className={cx("relative w-full min-h-[60vh] bg-white/90 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl", images.length === 0 ? "grid place-items-center" : "")} onDrop={onDrop} onDragOver={onDragOverBoard} onPaste={onPaste}>
                 {images.length === 0 && (<div className="text-center p-8"><div className="text-sm text-neutral-500 mb-3">Drop images here, paste from clipboard, or use “Add Images”.</div><Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Select Files</Button></div>)}
-                <div
-                  ref={boardRef}
-                  className="w-full"
-                  style={{
-                    background: bg,
-                    padding: boardPadding,
-                    width: boardWidth ? `${boardWidth}px` : undefined,
+                  <div
+                    ref={boardRef}
+                    className="relative w-full"
+                    style={{
+                      background: bg,
+                      padding: boardPadding,
+                      width: boardWidth ? `${boardWidth}px` : undefined,
                     height: boardHeight ? `${boardHeight}px` : undefined,
                     aspectRatio: boardAspect,
                   }}
                 >
-                  {showText && (boardTitle || boardDescription || logoSrc) && (
-                    <header className="mb-6 flex items-center gap-3">
-                      {logoSrc && (<img src={logoSrc} alt="logo" style={{ width: logoSize, height: logoSize, borderRadius: logoRounded ? "9999px" : "12px" }} className="shrink-0 object-cover" />)}
-                      <div>
+                    {showText && (boardTitle || boardDescription || logoSrc) && (
+                      <header className="mb-6 flex items-center gap-3">
+                        {logoSrc && (<img src={logoSrc} alt="logo" style={{ width: logoSize, height: logoSize, borderRadius: logoRounded ? "9999px" : "12px" }} className="shrink-0 object-cover" />)}
+                        <div>
                         {boardTitle && <h2 className="text-2xl font-semibold leading-tight mb-1">{boardTitle}</h2>}
                         {boardDescription && <p className="text-sm text-neutral-600 dark:text-neutral-300">{boardDescription}</p>}
                       </div>
@@ -590,12 +593,13 @@ export default function MethodMosaic() {
                         </figure>
                       );
                     })}
+                    </div>
+                    {showSafeMargin && <SafeMarginOverlay targetRef={boardRef} />}
                   </div>
+                  {exporting && (<div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/70 dark:bg-black/50 text-sm">Exporting…</div>)}
                 </div>
-                {exporting && (<div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/70 dark:bg-black/50 text-sm">Exporting…</div>)}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
           <Review />
         </div>
       </div>
