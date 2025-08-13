@@ -167,6 +167,41 @@ export default function MoodboardMaker() {
     addImageFromAsset(asset);
   };
 
+  const replaceImage = async (id) => {
+    const useUrl = confirm("Replace with image URL? Click Cancel to select a local file.");
+    if (useUrl) {
+      const url = prompt("Paste an image URL");
+      if (!url) return;
+      let src = url;
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        src = await readFileAsDataURL(blob);
+      } catch (err) {
+        if (!isTauri()) alert("Couldn't fetch image; it may be blocked by CORS.");
+      }
+      const { w, h } = await getImageSize(src);
+      const asset = { id: crypto.randomUUID(), src, w, h, name: url.split("/").pop() || "image" };
+      setAssets((prev) => [...prev, asset]);
+      setImages((prev) => prev.map((im) => im.id === id ? withDefaultCrop({ ...im, src, w, h, assetId: asset.id }) : im));
+      return;
+    }
+    await new Promise((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) { resolve(); return; }
+        const asset = await readFileAsAsset(file);
+        setAssets((prev) => [...prev, asset]);
+        setImages((prev) => prev.map((im) => im.id === id ? withDefaultCrop({ ...im, src: asset.src, w: asset.w, h: asset.h, assetId: asset.id }) : im));
+        resolve();
+      };
+      input.click();
+    });
+  };
+
   const clearAll = () => { setImages([]); originalOrderRef.current = []; };
   const removeImage = (id) => { setImages((prev) => prev.filter((i) => i.id !== id)); originalOrderRef.current = originalOrderRef.current.filter((x) => x !== id); };
 
