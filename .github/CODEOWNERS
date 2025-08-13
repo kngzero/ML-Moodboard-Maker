@@ -1,0 +1,8 @@
+# Default owners (adjust handles)
+*       @kngzero
+
+# Web app
+/src/   @kngzero
+
+# Desktop (Tauri)
+/src-tauri/  @kngzero
