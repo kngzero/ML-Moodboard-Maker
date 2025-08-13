@@ -386,7 +386,7 @@ export default function MoodboardMaker() {
         <Button variant="outline" size="sm" onClick={addFromUrl}>
           <ImagePlus className="h-4 w-4 mr-1" />From URL
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setAssetPanelOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => setAssetPanelOpen((prev) => !prev)}>
           <LayoutGrid className="h-4 w-4 mr-1" />Assets
         </Button>
         <Button variant="ghost" size="sm" onClick={resetOrder}>
