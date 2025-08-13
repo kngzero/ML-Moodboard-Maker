@@ -283,17 +283,19 @@ export default function MoodboardMaker() {
                     <option value="square">Flexible grid (resizable tiles)</option>
                   </SelectBox>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={cx("grid gap-4", layoutMode === "grid" ? "grid-cols-2" : "grid-cols-1")}> 
                   <div className="space-y-2">
                     <Label className="text-sm">Columns</Label>
                     <div className="px-1"><Slider min={1} max={12} step={1} value={[columns]} onValueChange={([v]) => setColumns(v)} /></div>
                     <div className="text-xs text-neutral-500">{columns} column(s)</div>
                   </div>
-                  <div className={cx("space-y-2", layoutMode !== "grid" ? "opacity-50 pointer-events-none" : "")}>
-                    <Label className="text-sm">Rows (visual)</Label>
-                    <div className="px-1"><Slider min={1} max={12} step={1} value={[rows]} onValueChange={([v]) => setRows(v)} /></div>
-                    <div className="text-xs text-neutral-500">{rows} row units</div>
-                  </div>
+                  {layoutMode === "grid" && (
+                    <div className="space-y-2">
+                      <Label className="text-sm">Row height</Label>
+                      <div className="px-1"><Slider min={1} max={12} step={1} value={[rows]} onValueChange={([v]) => setRows(v)} /></div>
+                      <div className="text-xs text-neutral-500">{rows} row(s)</div>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2"><Label className="text-sm">Gaps</Label><div className="px-1"><Slider min={0} max={48} step={1} value={[gap]} onValueChange={([v]) => setGap(v)} /></div><div className="text-xs text-neutral-500">{gap}px</div></div>
                 <div className="space-y-2"><Label className="text-sm">Board padding</Label><div className="px-1"><Slider min={0} max={96} step={2} value={[boardPadding]} onValueChange={([v]) => setBoardPadding(v)} /></div><div className="text-xs text-neutral-500">{boardPadding}px</div></div>
