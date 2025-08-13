@@ -10,6 +10,7 @@ The project aims to make visual exploration painless so you can collect inspirat
 - Multiple layout modes
 - Image cropping tools
 - Branding options for logos, fonts, and colors
+- Asset panel for reusing images with search and drag-to-place
 - Export as PNG, JPEG, WEBP, or PDF
 - Deploy to GitHub Pages
 
