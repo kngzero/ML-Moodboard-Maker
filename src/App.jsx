@@ -73,7 +73,18 @@ export default function MoodboardMaker() {
     }
   }, []);
   useEffect(() => {
-    localStorage.setItem("assets", JSON.stringify(assets));
+    try {
+      localStorage.setItem("assets", JSON.stringify(assets));
+    } catch (err) {
+      if (err && (err.name === "QuotaExceededError" || err.code === 22)) {
+        if (!isTauri()) {
+          alert("Storage limit reached. Please remove some images to continue.");
+        }
+        console.warn("Failed to persist assets: storage quota exceeded");
+      } else {
+        console.warn("Failed to persist assets", err);
+      }
+    }
   }, [assets]);
   const layoutStyle = useMemo(() => {
     if (layoutMode === "auto") return { columnCount: columns, columnGap: `${gap}px` };
