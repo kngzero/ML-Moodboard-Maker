@@ -11,6 +11,7 @@ import * as htmlToImage from "html-to-image";
 import jsPDF from "jspdf";
 import Review from "@/components/Review";
 import AssetPanel from "@/components/AssetPanel";
+import TemplateSelector, { TEMPLATES } from "@/components/TemplateSelector";
 import pkg from "../package.json";
 
 const cx = (...cls) => cls.filter(Boolean).join(" ");
@@ -53,6 +54,10 @@ export default function MethodMosaic() {
   const [rounded, setRounded] = useState(true);
   const [shadow, setShadow] = useState(true);
   const [boardPadding, setBoardPadding] = useState(24);
+  const [selectedTemplate, setSelectedTemplate] = useState("custom");
+  const [boardWidth, setBoardWidth] = useState(null);
+  const [boardHeight, setBoardHeight] = useState(null);
+  const [boardAspect, setBoardAspect] = useState(undefined);
   const [bg, setBg] = useState("#ffffff");
   const [brandingOpen, setBrandingOpen] = useState(true);
   const [layoutOpen, setLayoutOpen] = useState(true);
@@ -368,6 +373,27 @@ export default function MethodMosaic() {
   function getCellPx(){ const el = gridRef.current; if(!el) return gridCell; const w = el.clientWidth || 600; const cell = Math.max(40, Math.floor((w - gap*(columns - 1)) / columns)); return cell; }
   useEffect(()=>{ function update(){ setGridCell(getCellPx()); } update(); const ro = new ResizeObserver(update); if(gridRef.current) ro.observe(gridRef.current); window.addEventListener("resize", update); return ()=>{ window.removeEventListener("resize", update); ro.disconnect(); }; }, [columns, gap]);
 
+  const handleTemplateChange = (id) => {
+    setSelectedTemplate(id);
+    const tmpl = TEMPLATES.find((t) => t.id === id);
+    if (!tmpl || id === "custom") {
+      setColumns(4);
+      setGap(12);
+      setBoardPadding(24);
+      setBoardWidth(null);
+      setBoardHeight(null);
+      setBoardAspect(undefined);
+    } else {
+      setColumns(tmpl.columns);
+      setGap(tmpl.gap);
+      setBoardPadding(tmpl.padding);
+      setBoardWidth(tmpl.canvasWidth || null);
+      setBoardHeight(tmpl.canvasHeight || null);
+      setBoardAspect(tmpl.aspectRatio);
+    }
+    setTimeout(() => setGridCell(getCellPx()), 0);
+  };
+
   const Header = () => (
     <header className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-2">
@@ -467,6 +493,10 @@ export default function MethodMosaic() {
               </button>
               {layoutOpen && (<>
                 <div className="space-y-2">
+                  <Label className="text-sm">Template</Label>
+                  <TemplateSelector value={selectedTemplate} onChange={handleTemplateChange} />
+                </div>
+                <div className="space-y-2">
                   <Label className="text-sm">Layout mode</Label>
                   <SelectBox value={layoutMode} onChange={setLayoutMode}>
                     <option value="auto">Automatic (Masonry)</option>
@@ -521,7 +551,17 @@ export default function MethodMosaic() {
             <CardContent className="p-4 md:p-6">
               <div className={cx("relative w-full min-h-[60vh] bg-white/90 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl", images.length === 0 ? "grid place-items-center" : "")} onDrop={onDrop} onDragOver={onDragOverBoard} onPaste={onPaste}>
                 {images.length === 0 && (<div className="text-center p-8"><div className="text-sm text-neutral-500 mb-3">Drop images here, paste from clipboard, or use “Add Images”.</div><Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Select Files</Button></div>)}
-                <div ref={boardRef} className="w-full" style={{ background: bg, padding: boardPadding }}>
+                <div
+                  ref={boardRef}
+                  className="w-full"
+                  style={{
+                    background: bg,
+                    padding: boardPadding,
+                    width: boardWidth ? `${boardWidth}px` : undefined,
+                    height: boardHeight ? `${boardHeight}px` : undefined,
+                    aspectRatio: boardAspect,
+                  }}
+                >
                   {showText && (boardTitle || boardDescription || logoSrc) && (
                     <header className="mb-6 flex items-center gap-3">
                       {logoSrc && (<img src={logoSrc} alt="logo" style={{ width: logoSize, height: logoSize, borderRadius: logoRounded ? "9999px" : "12px" }} className="shrink-0 object-cover" />)}
