@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
+import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import * as htmlToImage from "html-to-image";
 import jsPDF from "jspdf";
 import Review from "@/components/Review";
 import AssetPanel from "@/components/AssetPanel";
+import pkg from "../package.json";
 
 const cx = (...cls) => cls.filter(Boolean).join(" ");
 const isTauri = () => typeof window !== "undefined" && (window.__TAURI__ || window.__TAURI_IPC__ || window.__TAURI_INTERNALS__);
@@ -59,10 +60,13 @@ export default function MoodboardMaker() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(null);
   const [snapshotting, setSnapshotting] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const boardRef = useRef(null);
   const fileInputRef = useRef(null);
   const gridRef = useRef(null);
   const spanDragRef = useRef(null);
+  const infoButtonRef = useRef(null);
+  const infoRef = useRef(null);
   const [gridCell, setGridCell] = useState(120);
   const canReorder = layoutMode !== "auto";
 
@@ -86,6 +90,22 @@ export default function MoodboardMaker() {
       }
     }
   }, [assets]);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (!infoOpen) return;
+      const dropdownEl = infoRef.current;
+      const buttonEl = infoButtonRef.current;
+      if (
+        dropdownEl && !dropdownEl.contains(e.target) &&
+        buttonEl && !buttonEl.contains(e.target)
+      ) {
+        setInfoOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [infoOpen]);
   const layoutStyle = useMemo(() => {
     if (layoutMode === "auto") return { columnCount: columns, columnGap: `${gap}px` };
     const base = { display: "grid", gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: `${gap}px` };
@@ -375,6 +395,31 @@ export default function MoodboardMaker() {
         <Button variant="destructive" size="sm" onClick={clearAll}>
           <Trash2 className="h-4 w-4 mr-1" />Clear All
         </Button>
+        <div className="relative">
+          <Button
+            ref={infoButtonRef}
+            variant="outline"
+            size="icon"
+            onClick={() => setInfoOpen((v) => !v)}
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+          {infoOpen && (
+            <div
+              ref={infoRef}
+              className="absolute right-0 mt-2 w-64 rounded-md border border-neutral-200 bg-white p-3 text-left text-sm shadow-md dark:border-neutral-700 dark:bg-neutral-900"
+            >
+              <h3 className="font-medium">Drag & Drop Moodboard</h3>
+              <p className="mt-1 mb-2 text-neutral-600">
+                Arrange images and export your moodboard.
+              </p>
+              <p className="text-neutral-600">
+                Created by <a href="https://methodlab.ca" target="_blank" rel="noreferrer" className="underline">Method Lab</a>
+              </p>
+              <p className="mt-2 text-xs text-neutral-500">Version {pkg.version}</p>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
