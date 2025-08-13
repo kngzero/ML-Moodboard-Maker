@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { get, set } from "idb-keyval";
 import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,13 +68,17 @@ export default function MoodboardMaker() {
   const canReorder = layoutMode !== "auto";
 
   useEffect(() => {
-    const stored = localStorage.getItem("assets");
-    if (stored) {
-      try { setAssets(JSON.parse(stored)); } catch {}
-    }
+    (async () => {
+      try {
+        const stored = await get('assets');
+        if (stored) setAssets(stored);
+      } catch (err) {
+        console.error('Failed to load assets', err);
+      }
+    })();
   }, []);
   useEffect(() => {
-    localStorage.setItem("assets", JSON.stringify(assets));
+    set('assets', assets).catch((err) => console.error('Failed to save assets', err));
   }, [assets]);
   const layoutStyle = useMemo(() => {
     if (layoutMode === "auto") return { columnCount: columns, columnGap: `${gap}px` };

@@ -7,7 +7,7 @@ const base = process.env.VITE_BASE_PATH || '/ML-Moodboard-Maker/'
 export default defineConfig({
   base,
   plugins: [react()],
-  resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+  resolve: { alias: { '@': path.resolve(__dirname, 'src'), 'idb-keyval': path.resolve(__dirname, 'src/idb-keyval.js') } },
   build: {
     rollupOptions: {
       external: ['@tauri-apps/api/dialog', '@tauri-apps/api/fs']
