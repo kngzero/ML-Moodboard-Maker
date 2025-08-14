@@ -2,48 +2,65 @@
 
 ![Method Mosaic logo](./logo.svg)
 
-## Introduction
-Method Mosaic is a simple web application for quickly assembling moodboards from your favorite images. Drag assets into the workspace, shuffle layouts, and experiment with branding to find the right look.
-
-The project aims to make visual exploration painless so you can collect inspiration and share polished boards in minutes.
+Method Mosaic is a web application for building moodboards quickly. Drop images into a flexible canvas, experiment with layouts and branding, and export polished boards for sharing.
 
 ## Features
 - Drag-and-drop images
-- Multiple layout modes
-- Image cropping tools
-- Branding options for logos, fonts, and colors
-- Asset panel for reusing images with search and drag-to-place
-- Export as PNG, JPEG, WEBP, or PDF
-- Deploy to GitHub Pages
+- Multiple layout templates with shuffle mode
+- Image cropping and repositioning
+- Branding controls for logos, fonts, and colors
+- Reusable asset panel with search and drag-to-place
+- Export to PNG, JPEG, WEBP, or PDF
+- One-command deployment to GitHub Pages
 
-## Requirements
-- Node.js (v18+) and npm
+## Tech Stack
+- React 18
+- Vite 5
+- Tailwind CSS
+- html-to-image and jspdf for export utilities
+
+## Prerequisites
+- Node.js v18+ and npm
 
 ## Quick Start
 ```bash
 npm install
 npm run dev
 ```
+Open <http://localhost:5173> to view the app.
 
 ## Usage
-1. Add images by dragging them into the canvas or uploading files.
-2. Configure layout and branding options to suit your board.
-3. Crop images as needed to fit the desired composition.
-4. Export the board as PNG, JPEG, WEBP, or PDF.
+1. Drag images onto the canvas or upload via the asset panel.
+2. Adjust layout, branding, and cropping from the sidebar.
+3. Reuse assets from the panel with search and drag-to-place.
+4. Export your board as PNG, JPEG, WEBP, or PDF.
 
-## Build/Deploy
+## Scripts
 ```bash
-npm run build
-npm run preview
-npm run deploy
+npm run dev      # Start development server
+npm run build    # Create production build in dist/
+npm run preview  # Preview the production build locally
+npm run deploy   # Build and publish dist/ to GitHub Pages
 ```
-The deploy command builds the project and publishes the `dist/` directory to GitHub Pages.
+`npm run deploy` requires the [`gh-pages`](https://www.npmjs.com/package/gh-pages) CLI.
 
-## Screenshots
-*(Optional section for project screenshots.)*
+## Project Structure
+```
+.
+├── index.html
+├── src/
+│   ├── App.jsx
+│   ├── main.jsx
+│   ├── index.css
+│   └── components/
+└── ...
+```
 
 ## Contributing
-*(Optional section for contribution guidelines.)*
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow and guidelines.
+
+## Security
+Report vulnerabilities privately via GitHub Security Advisories. See [SECURITY.md](SECURITY.md).
 
 ## License
-*(Optional section for license information.)*
+Add your chosen license in a `LICENSE` file and reference it here.
