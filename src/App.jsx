@@ -249,26 +249,46 @@ export default function MethodMosaic() {
   async function withSnapshot(cb) {
     setSnapshotting(true);
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    try { return await cb(); } finally { setSnapshotting(false); await new Promise((r) => requestAnimationFrame(r)); }
+    const node = boardRef.current;
+    let width = 0;
+    let height = 0;
+    let prev = { width: "", height: "" };
+    if (node) {
+      prev = { width: node.style.width, height: node.style.height };
+      width = boardWidth || node.clientWidth;
+      if (boardHeight) height = boardHeight; else if (boardAspect) height = Math.round(width / boardAspect); else height = node.clientHeight;
+      node.style.width = `${width}px`;
+      node.style.height = `${height}px`;
+    }
+    try {
+      return await cb({ width, height });
+    } finally {
+      if (node) {
+        node.style.width = prev.width;
+        node.style.height = prev.height;
+      }
+      setSnapshotting(false);
+      await new Promise((r) => requestAnimationFrame(r));
+    }
   }
-  const exportPNG = async () => {
+  const exportPNG = async ({ width, height }) => {
     if (!boardRef.current) return "";
     return await htmlToImage.toPng(boardRef.current, {
-      pixelRatio: 2, cacheBust: true, backgroundColor: bg,
+      pixelRatio: 2, cacheBust: true, backgroundColor: bg, width, height,
       filter: (node) => !node.closest?.('[data-export-exclude]')
     });
   };
-  const exportJPEG = async () => {
+  const exportJPEG = async ({ width, height }) => {
     if (!boardRef.current) return "";
     return await htmlToImage.toJpeg(boardRef.current, {
-      pixelRatio: 2, quality: 0.95, cacheBust: true, backgroundColor: bg,
+      pixelRatio: 2, quality: 0.95, cacheBust: true, backgroundColor: bg, width, height,
       filter: (node) => !node.closest?.('[data-export-exclude]')
     });
   };
-  const exportWEBP = async () => {
+  const exportWEBP = async ({ width, height }) => {
     if (!boardRef.current) return "";
     const blob = await htmlToImage.toBlob(boardRef.current, {
-      pixelRatio: 2, cacheBust: true, backgroundColor: bg,
+      pixelRatio: 2, cacheBust: true, backgroundColor: bg, width, height,
       filter: (node) => !node.closest?.('[data-export-exclude]')
     });
     return blob ? await blobToDataURL(blob) : "";
@@ -277,11 +297,11 @@ export default function MethodMosaic() {
   const handleExport = async () => {
     try {
       setExportError(null); setExporting(true);
-      const dataUrl = await withSnapshot(async () => {
+      const dataUrl = await withSnapshot(async (size) => {
         let du = "";
-        if (exportFormat === "png") du = await exportPNG();
-        if (exportFormat === "jpeg") du = await exportJPEG();
-        if (exportFormat === "webp") du = await exportWEBP();
+        if (exportFormat === "png") du = await exportPNG(size);
+        if (exportFormat === "jpeg") du = await exportJPEG(size);
+        if (exportFormat === "webp") du = await exportWEBP(size);
         return du;
       });
       if (!dataUrl) throw new Error("Export failed. Try smaller board or local images.");
@@ -304,36 +324,11 @@ export default function MethodMosaic() {
   const exportAsPDF = async () => {
     try {
       setExportError(null); setExporting(true);
-      const png = await withSnapshot(() => exportPNG());
+      const { dataUrl: png, width, height } = await withSnapshot(async (size) => ({ dataUrl: await exportPNG(size), ...size }));
       if (!png) throw new Error("Could not render board to image");
-      const img = new Image(); img.src = png; await img.decode();
-      const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 24;
-      const maxW = pageW - margin * 2;
-      const maxH = pageH - margin * 2;
-      const scale = Math.min(1, maxW / img.width);
-      const scaledW = Math.round(img.width * scale);
-      const scaledH = Math.round(img.height * scale);
-      const pages = Math.max(1, Math.ceil(scaledH / maxH));
-      const x = Math.round((pageW - scaledW) / 2);
-      for (let i = 0; i < pages; i++) {
-        const sy = Math.round((i * maxH) / scale);
-        const sh = i === pages - 1
-          ? img.height - sy
-          : Math.min(Math.round(maxH / scale), img.height - sy);
-        const sliceCanvas = document.createElement("canvas");
-        sliceCanvas.width = img.width;
-        sliceCanvas.height = sh;
-        const ctx = sliceCanvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas not supported");
-        ctx.drawImage(img, 0, sy, img.width, sh, 0, 0, img.width, sh);
-        const data = sliceCanvas.toDataURL("image/png");
-        const h = Math.round(sh * scale);
-        pdf.addImage(data, "PNG", x, margin, scaledW, h);
-        if (i < pages - 1) pdf.addPage();
-      }
+      const orientation = width >= height ? "landscape" : "portrait";
+      const pdf = new jsPDF({ orientation, unit: "px", format: [width, height] });
+      pdf.addImage(png, "PNG", 0, 0, width, height);
       if (isTauri()) {
         const dialogMod = "@tauri-apps/api/dialog";
         const fsMod = "@tauri-apps/api/fs";
