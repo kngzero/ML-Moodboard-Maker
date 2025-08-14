@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -77,6 +77,7 @@ export default function MethodMosaic() {
   const spanDragRef = useRef(null);
   const infoButtonRef = useRef(null);
   const infoRef = useRef(null);
+  const headerRef = useRef(null);
   const [gridCell, setGridCell] = useState(120);
   const canReorder = layoutMode !== "auto";
 
@@ -116,6 +117,17 @@ export default function MethodMosaic() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [infoOpen]);
+
+  useLayoutEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        document.documentElement.style.setProperty("--header-height", `${headerRef.current.offsetHeight}px`);
+      }
+    };
+    updateHeaderHeight();
+    window.addEventListener("resize", updateHeaderHeight);
+    return () => window.removeEventListener("resize", updateHeaderHeight);
+  }, []);
   const layoutStyle = useMemo(() => {
     if (layoutMode === "auto") return { columnCount: columns, columnGap: `${gap}px` };
     const base = { display: "grid", gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: `${gap}px` };
@@ -407,7 +419,7 @@ export default function MethodMosaic() {
   };
 
   const Header = () => (
-    <header className="w-full bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+    <header ref={headerRef} className="fixed top-0 left-0 w-full bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 z-50">
       <div className="mx-auto max-w-[1400px] flex items-center justify-between gap-4 px-4 md:px-6 lg:px-8 py-4">
         <div className="flex items-center gap-2">
           <svg
@@ -426,9 +438,6 @@ export default function MethodMosaic() {
           </Button>
           <Button variant="outline" size="sm" onClick={addFromUrl}>
             <ImagePlus className="h-4 w-4 mr-1" />From URL
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setAssetPanelOpen((prev) => !prev)}>
-            <LayoutGrid className="h-4 w-4 mr-1" />Assets
           </Button>
           <Button variant="outline" size="sm" onClick={() => setReviewOpen(true)}>
             Leave Review
@@ -472,7 +481,7 @@ export default function MethodMosaic() {
   return (
     <div className="min-h-screen w-full bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
       <Header />
-      <div className="p-4 md:p-6 lg:p-8">
+      <div className="p-4 md:p-6 lg:p-8" style={{ marginTop: "var(--header-height)" }}>
         <div className="max-w-[1400px] mx-auto">
         <div className="space-y-4">
           <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
@@ -531,11 +540,11 @@ export default function MethodMosaic() {
       </div>
     </div>
     <SettingsDrawer open={settingsOpen} onToggle={() => setSettingsOpen((v) => !v)}>
-      <Card className="shadow-lg rounded-2xl h-full overflow-y-auto">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-xl"><Settings2 className="h-5 w-5"/> Moodboard Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <div className="h-full overflow-y-auto space-y-6">
+        <div className="pb-2">
+          <h2 className="flex items-center gap-2 text-xl font-semibold"><Settings2 className="h-5 w-5"/> Moodboard Settings</h2>
+        </div>
+        <div className="space-y-6">
           <div className="space-y-4">
             <button type="button" className="w-full flex items-center justify-between px-0 py-1" onClick={() => setBrandingOpen((v) => !v)} aria-expanded={brandingOpen}>
               <span className="flex items-center gap-2 text-sm"><ImageIcon className="h-4 w-4"/>Branding</span>
@@ -624,8 +633,8 @@ export default function MethodMosaic() {
             </div>
             <p className="text-xs text-neutral-500">Tip: Press ⌘/Ctrl + S to quick-save using the selected image format.</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </SettingsDrawer>
     <AssetPanel
         assets={assets}
