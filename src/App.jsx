@@ -486,9 +486,9 @@ export default function MethodMosaic() {
         <div className="space-y-4">
           <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
           <p className="text-sm text-neutral-500">Drop images • Paste • {canReorder ? "Drag tiles to reorder" : "Switch to Grid or Square to reorder"} • Reset order</p>
-          <Card className="rounded-2xl shadow-xl">
+          <Card className="bg-transparent rounded-none shadow-none">
             <CardContent className="p-4 md:p-6">
-              <div className={cx("relative w-full min-h-[60vh] bg-white/90 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl", images.length === 0 ? "grid place-items-center" : "")} onDrop={onDrop} onDragOver={onDragOverBoard} onPaste={onPaste}>
+              <div className={cx("relative w-full min-h-[60vh] border border-neutral-200 dark:border-neutral-700", images.length === 0 ? "grid place-items-center" : "")} onDrop={onDrop} onDragOver={onDragOverBoard} onPaste={onPaste}>
                 {images.length === 0 && (<div className="text-center p-8"><div className="text-sm text-neutral-500 mb-3">Drop images here, paste from clipboard, or use “Add Images”.</div><Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Select Files</Button></div>)}
                   <div
                     ref={boardRef}
