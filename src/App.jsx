@@ -327,9 +327,10 @@ export default function MethodMosaic() {
     return blob ? await blobToDataURL(blob) : "";
   };
 
-  const handleExport = async () => {
+  const handleExport = useCallback(async () => {
     try {
-      setExportError(null); setExporting(true);
+      setExportError(null);
+      setExporting(true);
       const dataUrl = await withSnapshot(async (size) => {
         let du = "";
         if (exportFormat === "png") du = await exportPNG(size);
@@ -351,8 +352,10 @@ export default function MethodMosaic() {
       }
     } catch (err) {
       setExportError((err && (err.message || String(err))) || "Unknown export error");
-    } finally { setExporting(false); }
-  };
+    } finally {
+      setExporting(false);
+    }
+  }, [exportFormat, bg, boardWidth, boardHeight, boardAspect]);
 
   const exportAsPDF = async () => {
     try {
@@ -392,7 +395,16 @@ export default function MethodMosaic() {
   async function getImageSize(src){ return await new Promise((resolve, reject)=>{ const img = new Image(); img.onload = ()=>resolve({ w: img.naturalWidth, h: img.naturalHeight }); img.onerror = reject; img.src = src; }); }
   const saveBoardFile = async () => { try { const files = {}; const assetMeta = []; assets.forEach((a) => { const { u8, ext } = dataUrlToUint8(a.src); const fname = `${a.id}.${ext}`; files[`assets/${fname}`] = u8; assetMeta.push({ id: a.id, name: a.name, w: a.w, h: a.h, file: fname }); }); let logoMeta = null; if (logoSrc) { const { u8, ext } = dataUrlToUint8(logoSrc); const fname = `logo.${ext}`; files[`assets/${fname}`] = u8; logoMeta = { file: fname, size: logoSize, rounded: logoRounded }; } const meta = { schema: 1, appVersion: pkg.version, board: { title: boardTitle, description: boardDescription, showText, gap, columns, rows, layoutMode, rounded, shadow, showSafeMargin, boardPadding, boardWidth, boardHeight, boardAspect, bg, selectedTemplate, images: images.map(({ id, assetId, colSpan, rowSpan, crop }) => ({ id, assetId, colSpan, rowSpan, crop })), logo: logoMeta }, assets: assetMeta }; files["meta.json"] = strToU8(JSON.stringify(meta, null, 2)); const zipped = zipSync(files, { level: 0 }); if (isTauri()) { const dialogMod = "@tauri-apps/api/dialog"; const fsMod = "@tauri-apps/api/fs"; const { save } = await import(/* @vite-ignore */ dialogMod); const { writeBinaryFile } = await import(/* @vite-ignore */ fsMod); const path = await save({ defaultPath: `${boardTitle || "board"}.mlmboard` }); if (path) await writeBinaryFile({ path, contents: zipped }); } else { downloadBlob(new Blob([zipped], { type: "application/zip" }), `${boardTitle || "board"}.mlmboard`); } } catch (err) { console.error("Failed to save board", err); } };
   const loadBoardFile = async (file) => { try { const u8 = new Uint8Array(await file.arrayBuffer()); const files = unzipSync(u8); const meta = JSON.parse(strFromU8(files["meta.json"])); if (!meta.schema || meta.schema > 1) { alert("Unsupported board file version"); return; } const loadedAssets = []; (meta.assets || []).forEach((a) => { const data = files[`assets/${a.file}`]; if (!data) return; const mime = extToMime(a.file.split('.').pop() || ""); const src = uint8ToDataUrl(data, mime); loadedAssets.push({ id: a.id, src, w: a.w, h: a.h, name: a.name }); }); setAssets(loadedAssets); setImages((meta.board?.images || []).map((img) => { const asset = loadedAssets.find((a) => a.id === img.assetId); return withDefaultCrop({ ...img, src: asset?.src, w: asset?.w, h: asset?.h }); })); originalOrderRef.current = (meta.board?.images || []).map((i) => i.id); setBoardTitle(meta.board?.title || ""); setBoardDescription(meta.board?.description || ""); setShowText(!!meta.board?.showText); setGap(meta.board?.gap ?? 12); setColumns(meta.board?.columns ?? 4); setRows(meta.board?.rows ?? 3); setLayoutMode(meta.board?.layoutMode || "auto"); setRounded(meta.board?.rounded ?? true); setShadow(meta.board?.shadow ?? true); setShowSafeMargin(!!meta.board?.showSafeMargin); setBoardPadding(meta.board?.boardPadding ?? 24); setBoardWidth(meta.board?.boardWidth ?? null); setBoardHeight(meta.board?.boardHeight ?? null); setBoardAspect(meta.board?.boardAspect); setBg(meta.board?.bg || "#ffffff"); setSelectedTemplate(meta.board?.selectedTemplate || "custom"); if (meta.board?.logo && meta.board.logo.file) { const data = files[`assets/${meta.board.logo.file}`]; if (data) { const mime = extToMime(meta.board.logo.file.split('.').pop() || ""); setLogoSrc(uint8ToDataUrl(data, mime)); setLogoSize(meta.board.logo.size ?? 40); setLogoRounded(meta.board.logo.rounded ?? true); } } else setLogoSrc(null); } catch (err) { console.error("Failed to load board", err); } };
-  useEffect(() => { const onKey = (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); handleExport(); } }; window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey); }, [exportFormat]);
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleExport();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleExport]);
   const openCrop = (id) => { const img = images.find((i) => i.id === id); const c = withDefaultCrop(img).crop; setTempCrop({ ...c }); setCropOpenId(id); };
   const closeCrop = () => setCropOpenId(null);
   const applyCrop = () => { if (!cropOpenId) return; setImages((prev) => prev.map((im) => (im.id === cropOpenId ? { ...im, crop: { ...tempCrop } } : im))); setCropOpenId(null); };
