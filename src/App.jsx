@@ -11,6 +11,7 @@ import * as htmlToImage from "html-to-image";
 import jsPDF from "jspdf";
 import Review from "@/components/Review";
 import AssetPanel from "@/components/AssetPanel";
+import SettingsDrawer from "@/components/SettingsDrawer";
 import TemplateSelector, { TEMPLATES } from "@/components/TemplateSelector";
 import SafeMarginOverlay from "@/components/SafeMarginOverlay";
 import pkg from "../package.json";
@@ -34,6 +35,7 @@ export default function MethodMosaic() {
   const [images, setImages] = useState(/** @type {BoardImage[]} */([]));
   const [assets, setAssets] = useState([]);
   const [assetPanelOpen, setAssetPanelOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(true);
   const [reviewOpen, setReviewOpen] = useState(false);
   const originalOrderRef = useRef([]);
   const [draggingId, setDraggingId] = useState(null);
@@ -471,96 +473,7 @@ export default function MethodMosaic() {
     <div className="min-h-screen w-full bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
       <Header />
       <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
-        <Card className="sticky top-6 h-fit shadow-lg rounded-2xl">
-          <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-xl"><Settings2 className="h-5 w-5"/> Moodboard Settings</CardTitle></CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <button type="button" className="w-full flex items-center justify-between px-0 py-1" onClick={() => setBrandingOpen((v) => !v)} aria-expanded={brandingOpen}>
-                <span className="flex items-center gap-2 text-sm"><ImageIcon className="h-4 w-4"/>Branding</span>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2"><Switch checked={showText} onCheckedChange={setShowText} id="showText"/><Label htmlFor="showText" className="text-sm">Show</Label></div>
-                  {brandingOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
-                </div>
-              </button>
-              {brandingOpen && (<>
-                <div className="space-y-3">
-                  <Input placeholder="Board title" value={boardTitle} onChange={(e) => setBoardTitle(e.target.value)} />
-                  <Input placeholder="Short description" value={boardDescription} onChange={(e) => setBoardDescription(e.target.value)} />
-                </div>
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => logoInputRef.current?.click()}>Upload Logo</Button>
-                    {logoSrc && <Button variant="ghost" onClick={() => setLogoSrc(null)}>Remove</Button>}
-                  </div>
-                  <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onLogoFiles(e.target.files)} />
-                  {logoSrc && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label className="text-sm">Logo size</Label><Slider min={16} max={128} step={1} value={[logoSize]} onValueChange={([v]) => setLogoSize(v)} /><div className="text-xs text-neutral-500">{logoSize}px</div></div>
-                      <div className="flex items-center gap-2 mt-6"><Switch checked={logoRounded} onCheckedChange={setLogoRounded} id="logoRound"/><Label htmlFor="logoRound">Rounded</Label></div>
-                    </div>
-                  )}
-                </div>
-              </>)}
-            </div>
-            <div className="space-y-4">
-              <button type="button" className="w-full flex items-center justify-between px-0 py-1" onClick={() => setLayoutOpen((v) => !v)} aria-expanded={layoutOpen}>
-                <span className="flex items-center gap-2 text-sm"><LayoutGrid className="h-4 w-4"/>Layout</span>
-                {layoutOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
-              </button>
-              {layoutOpen && (<>
-                <div className="space-y-2">
-                  <Label className="text-sm">Template</Label>
-                  <TemplateSelector value={selectedTemplate} onChange={handleTemplateChange} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm">Layout mode</Label>
-                  <SelectBox value={layoutMode} onChange={setLayoutMode}>
-                    <option value="auto">Automatic (Masonry)</option>
-                    <option value="grid">Grid (Rows × Columns)</option>
-                    <option value="square">Flexible grid (resizable tiles)</option>
-                  </SelectBox>
-                </div>
-                <div className={cx("grid gap-4", layoutMode === "grid" ? "grid-cols-2" : "grid-cols-1")}> 
-                  <div className="space-y-2">
-                    <Label className="text-sm">Columns</Label>
-                    <div className="px-1"><Slider min={1} max={12} step={1} value={[columns]} onValueChange={([v]) => setColumns(v)} /></div>
-                    <div className="text-xs text-neutral-500">{columns} column(s)</div>
-                  </div>
-                  {layoutMode === "grid" && (
-                    <div className="space-y-2">
-                      <Label className="text-sm">Row height</Label>
-                      <div className="px-1"><Slider min={1} max={12} step={1} value={[rows]} onValueChange={([v]) => setRows(v)} /></div>
-                      <div className="text-xs text-neutral-500">{rows} row(s)</div>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2"><Label className="text-sm">Gaps</Label><div className="px-1"><Slider min={0} max={48} step={1} value={[gap]} onValueChange={([v]) => setGap(v)} /></div><div className="text-xs text-neutral-500">{gap}px</div></div>
-                <div className="space-y-2"><Label className="text-sm">Board padding</Label><div className="px-1"><Slider min={0} max={96} step={2} value={[boardPadding]} onValueChange={([v]) => setBoardPadding(v)} /></div><div className="text-xs text-neutral-500">{boardPadding}px</div></div>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2"><Switch checked={rounded} onCheckedChange={setRounded} id="rounded"/><Label htmlFor="rounded">Rounded corners</Label></div>
-                  <div className="flex items-center gap-2"><Switch checked={shadow} onCheckedChange={setShadow} id="shadow"/><Label htmlFor="shadow">Soft shadow</Label></div>
-                </div>
-                <div className="flex items-center gap-2"><Switch checked={showSafeMargin} onCheckedChange={setShowSafeMargin} id="safe-margin"/><Label htmlFor="safe-margin">Show safe margin</Label></div>
-                <div className="space-y-2"><Label className="text-sm">Background</Label><div className="flex items-center gap-3"><Input type="color" value={bg} onChange={(e) => setBg(e.target.value)} className="w-16 h-10 p-1 cursor-pointer"/><Input type="text" value={bg} onChange={(e) => setBg(e.target.value)} /></div></div>
-              </>)}
-            </div>
-            <div className="space-y-3">
-              <Label className="text-sm">Export</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <SelectBox value={exportFormat} onChange={setExportFormat}>
-                  <option value="png">PNG</option>
-                  <option value="jpeg">JPEG</option>
-                  <option value="webp">WEBP</option>
-                </SelectBox>
-                <Button onClick={handleExport} className="w-full" variant="default"><Download className="h-4 w-4 mr-2"/>Save Image</Button>
-                <div className="col-span-2"><Button onClick={exportAsPDF} variant="secondary" className="w-full"><FileDown className="h-4 w-4 mr-2"/>Save as PDF</Button></div>
-                {exportError && <div className="col-span-2 text-xs text-red-600">{exportError}</div>}
-              </div>
-              <p className="text-xs text-neutral-500">Tip: Press ⌘/Ctrl + S to quick-save using the selected image format.</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="max-w-[1400px] mx-auto">
         <div className="space-y-4">
           <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
           <p className="text-sm text-neutral-500">Drop images • Paste • {canReorder ? "Drag tiles to reorder" : "Switch to Grid or Square to reorder"} • Reset order</p>
@@ -617,10 +530,107 @@ export default function MethodMosaic() {
         </div>
       </div>
     </div>
+    <SettingsDrawer open={settingsOpen} onToggle={() => setSettingsOpen((v) => !v)}>
+      <Card className="shadow-lg rounded-2xl h-full overflow-y-auto">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-xl"><Settings2 className="h-5 w-5"/> Moodboard Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <button type="button" className="w-full flex items-center justify-between px-0 py-1" onClick={() => setBrandingOpen((v) => !v)} aria-expanded={brandingOpen}>
+              <span className="flex items-center gap-2 text-sm"><ImageIcon className="h-4 w-4"/>Branding</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2"><Switch checked={showText} onCheckedChange={setShowText} id="showText"/><Label htmlFor="showText" className="text-sm">Show</Label></div>
+                {brandingOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+              </div>
+            </button>
+            {brandingOpen && (
+              <>
+                <div className="space-y-3">
+                  <Input placeholder="Board title" value={boardTitle} onChange={(e) => setBoardTitle(e.target.value)} />
+                  <Input placeholder="Short description" value={boardDescription} onChange={(e) => setBoardDescription(e.target.value)} />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => logoInputRef.current?.click()}>Upload Logo</Button>
+                    {logoSrc && <Button variant="ghost" onClick={() => setLogoSrc(null)}>Remove</Button>}
+                  </div>
+                  <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onLogoFiles(e.target.files)} />
+                  {logoSrc && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label className="text-sm">Logo size</Label><Slider min={16} max={128} step={1} value={[logoSize]} onValueChange={([v]) => setLogoSize(v)} /><div className="text-xs text-neutral-500">{logoSize}px</div></div>
+                      <div className="flex items-center gap-2 mt-6"><Switch checked={logoRounded} onCheckedChange={setLogoRounded} id="logoRound"/><Label htmlFor="logoRound">Rounded</Label></div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+          <div className="space-y-4">
+            <button type="button" className="w-full flex items-center justify-between px-0 py-1" onClick={() => setLayoutOpen((v) => !v)} aria-expanded={layoutOpen}>
+              <span className="flex items-center gap-2 text-sm"><LayoutGrid className="h-4 w-4"/>Layout</span>
+              {layoutOpen ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+            </button>
+            {layoutOpen && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm">Template</Label>
+                  <TemplateSelector value={selectedTemplate} onChange={handleTemplateChange} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">Layout mode</Label>
+                  <SelectBox value={layoutMode} onChange={setLayoutMode}>
+                    <option value="auto">Automatic (Masonry)</option>
+                    <option value="grid">Grid (Rows × Columns)</option>
+                    <option value="square">Flexible grid (resizable tiles)</option>
+                  </SelectBox>
+                </div>
+                <div className={cx("grid gap-4", layoutMode === "grid" ? "grid-cols-2" : "grid-cols-1")}>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Columns</Label>
+                    <div className="px-1"><Slider min={1} max={12} step={1} value={[columns]} onValueChange={([v]) => setColumns(v)} /></div>
+                    <div className="text-xs text-neutral-500">{columns} column(s)</div>
+                  </div>
+                  {layoutMode === "grid" && (
+                    <div className="space-y-2">
+                      <Label className="text-sm">Row height</Label>
+                      <div className="px-1"><Slider min={1} max={12} step={1} value={[rows]} onValueChange={([v]) => setRows(v)} /></div>
+                      <div className="text-xs text-neutral-500">{rows} row(s)</div>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2"><Label className="text-sm">Gaps</Label><div className="px-1"><Slider min={0} max={48} step={1} value={[gap]} onValueChange={([v]) => setGap(v)} /></div><div className="text-xs text-neutral-500">{gap}px</div></div>
+                <div className="space-y-2"><Label className="text-sm">Board padding</Label><div className="px-1"><Slider min={0} max={96} step={2} value={[boardPadding]} onValueChange={([v]) => setBoardPadding(v)} /></div><div className="text-xs text-neutral-500">{boardPadding}px</div></div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2"><Switch checked={rounded} onCheckedChange={setRounded} id="rounded"/><Label htmlFor="rounded">Rounded corners</Label></div>
+                  <div className="flex items-center gap-2"><Switch checked={shadow} onCheckedChange={setShadow} id="shadow"/><Label htmlFor="shadow">Soft shadow</Label></div>
+                </div>
+                <div className="flex items-center gap-2"><Switch checked={showSafeMargin} onCheckedChange={setShowSafeMargin} id="safe-margin"/><Label htmlFor="safe-margin">Show safe margin</Label></div>
+                <div className="space-y-2"><Label className="text-sm">Background</Label><div className="flex items-center gap-3"><Input type="color" value={bg} onChange={(e) => setBg(e.target.value)} className="w-16 h-10 p-1 cursor-pointer"/><Input type="text" value={bg} onChange={(e) => setBg(e.target.value)} /></div></div>
+              </>
+            )}
+          </div>
+          <div className="space-y-3">
+            <Label className="text-sm">Export</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <SelectBox value={exportFormat} onChange={setExportFormat}>
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="webp">WEBP</option>
+              </SelectBox>
+              <Button onClick={handleExport} className="w-full" variant="default"><Download className="h-4 w-4 mr-2"/>Save Image</Button>
+              <div className="col-span-2"><Button onClick={exportAsPDF} variant="secondary" className="w-full"><FileDown className="h-4 w-4 mr-2"/>Save as PDF</Button></div>
+              {exportError && <div className="col-span-2 text-xs text-red-600">{exportError}</div>}
+            </div>
+            <p className="text-xs text-neutral-500">Tip: Press ⌘/Ctrl + S to quick-save using the selected image format.</p>
+          </div>
+        </CardContent>
+      </Card>
+    </SettingsDrawer>
     <AssetPanel
         assets={assets}
         open={assetPanelOpen}
-        onClose={() => setAssetPanelOpen(false)}
+        onToggle={() => setAssetPanelOpen((v) => !v)}
         onRemoveAsset={removeAsset}
         onClearAssets={clearAssets}
       />
