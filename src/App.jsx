@@ -14,6 +14,7 @@ import AssetPanel from "@/components/AssetPanel";
 import SettingsDrawer from "@/components/SettingsDrawer";
 import TemplateSelector, { TEMPLATES } from "@/components/TemplateSelector";
 import SafeMarginOverlay from "@/components/SafeMarginOverlay";
+import VirtualImage from "@/components/VirtualImage";
 import pkg from "../package.json";
 
 const cx = (...cls) => cls.filter(Boolean).join(" ");
@@ -70,6 +71,7 @@ export default function MethodMosaic() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(null);
   const [snapshotting, setSnapshotting] = useState(false);
+  const [renderAllImages, setRenderAllImages] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const boardRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -275,6 +277,7 @@ export default function MethodMosaic() {
 
   async function withSnapshot(cb) {
     setSnapshotting(true);
+    setRenderAllImages(true);
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     const node = boardRef.current;
     let width = 0;
@@ -295,6 +298,7 @@ export default function MethodMosaic() {
         node.style.height = prev.height;
       }
       setSnapshotting(false);
+      setRenderAllImages(false);
       await new Promise((r) => requestAnimationFrame(r));
     }
   }
@@ -517,7 +521,25 @@ export default function MethodMosaic() {
                       return (
                         <figure key={img.id} style={{...itemStyle, ...(layoutMode === "square" ? { gridColumnEnd: `span ${img.colSpan || 1}`, gridRowEnd: `span ${img.rowSpan || 1}`, height: (gridCell * (img.rowSpan || 1)) + (gap * ((img.rowSpan || 1) - 1)) } : {}), borderRadius: rounded ? 12 : 0, boxShadow: shadow ? "0 8px 24px rgba(0,0,0,.08)" : "none", backgroundColor: "#fff"}} className={figureBase} draggable={canReorder} onDragStart={onItemDragStart(img.id)} onDragOver={onItemDragOver(img.id)} onDrop={onItemDrop(img.id)} onDragEnd={onItemDragEnd}>
                           {canReorder && (<div data-export-exclude className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-md px-2 py-1 text-[10px] bg-white/80 dark:bg-neutral-900/70 border border-neutral-200 dark:border-neutral-700 opacity-0 group-hover:opacity-100 transition-opacity"><GripVertical className="h-3 w-3"/>Drag to reorder</div>)}
-                          {layoutMode === "square" ? (<img src={img.src} alt="mood" className="block w-full h-full select-none object-cover" style={{ objectPosition: `${crop.x}% ${crop.y}%`, transform: `scale(${crop.zoom})`, transformOrigin: "center center" }} draggable={false}/>) : (<img src={img.src} alt="mood" className={cx("block w-full h-auto select-none", layoutMode === "grid" ? "object-cover" : "")} style={layoutMode === "grid" ? { aspectRatio: `${img.w || 4} / ${img.h || 3}` } : undefined} draggable={false}/>)}
+                          {layoutMode === "square" ? (
+                            <VirtualImage
+                              force={renderAllImages}
+                              src={img.src}
+                              alt="mood"
+                              wrapperClassName="w-full h-full"
+                              imgClassName="block w-full h-full select-none object-cover"
+                              imgStyle={{ objectPosition: `${crop.x}% ${crop.y}%`, transform: `scale(${crop.zoom})`, transformOrigin: "center center" }}
+                            />
+                          ) : (
+                            <VirtualImage
+                              force={renderAllImages}
+                              src={img.src}
+                              alt="mood"
+                              wrapperClassName="block w-full"
+                              wrapperStyle={{ aspectRatio: `${img.w || 4} / ${img.h || 3}` }}
+                              imgClassName={cx("block w-full h-full select-none", (layoutMode === "grid" || layoutMode === "auto") ? "object-cover" : "")}
+                            />
+                          )}
                           <div data-export-exclude className="absolute inset-x-2 top-2 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             {layoutMode === "square" && (<Button size="sm" variant="secondary" className="h-8" onClick={() => openCrop(img.id)}>Crop</Button>)}
                             <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => replaceImage(img.id)}><ImageIcon className="h-4 w-4"/></Button>
