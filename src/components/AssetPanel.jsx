@@ -35,9 +35,6 @@ export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onCl
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
-{/*                   <Button variant="ghost" size="icon" onClick={onToggle} aria-label="Close assets">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button> */}
                 </div>
               </div>
               <Input
