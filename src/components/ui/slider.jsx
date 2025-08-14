@@ -5,6 +5,6 @@ export const Slider = ({ min=0, max=100, step=1, value=[0], onValueChange=()=>{}
   return (
     <input type="range" min={min} max={max} step={step} value={v}
       onChange={(e)=>onValueChange([Number(e.target.value)])}
-      className={['w-full', className].join(' ')} />
+      className={['w-full accent-black', className].join(' ')} />
   )
 }
