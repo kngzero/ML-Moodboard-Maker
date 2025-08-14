@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle } from "lucide-react";
+import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,7 @@ export default function MethodMosaic() {
   const [images, setImages] = useState(/** @type {BoardImage[]} */([]));
   const [assets, setAssets] = useState([]);
   const [assetPanelOpen, setAssetPanelOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const originalOrderRef = useRef([]);
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -231,6 +232,18 @@ export default function MethodMosaic() {
 
   const clearAll = () => { setImages([]); originalOrderRef.current = []; };
   const removeImage = (id) => { setImages((prev) => prev.filter((i) => i.id !== id)); originalOrderRef.current = originalOrderRef.current.filter((x) => x !== id); };
+  const removeAsset = (id) => {
+    setAssets((prev) => prev.filter((a) => a.id !== id));
+    setImages((prev) => prev.filter((i) => i.assetId !== id));
+    originalOrderRef.current = originalOrderRef.current.filter((x) => {
+      const img = images.find((i) => i.id === x);
+      return img && img.assetId !== id;
+    });
+  };
+  const clearAssets = () => {
+    setAssets([]);
+    clearAll();
+  };
 
   const onLogoFiles = async (files) => {
     if (!files?.[0]) return; const file = files[0]; const src = await readFileAsDataURL(file); setLogoSrc(src);
@@ -414,6 +427,9 @@ export default function MethodMosaic() {
         <Button variant="outline" size="sm" onClick={() => setAssetPanelOpen((prev) => !prev)}>
           <LayoutGrid className="h-4 w-4 mr-1" />Assets
         </Button>
+        <Button variant="outline" size="sm" onClick={() => setReviewOpen(true)}>
+          Leave Review
+        </Button>
         <Button variant="ghost" size="sm" onClick={resetOrder}>
           <RotateCcw className="h-4 w-4 mr-1" />Reset Order
         </Button>
@@ -595,10 +611,31 @@ export default function MethodMosaic() {
                 </div>
               </CardContent>
             </Card>
-          <Review />
         </div>
       </div>
-      <AssetPanel assets={assets} open={assetPanelOpen} onClose={() => setAssetPanelOpen(false)} />
+      <AssetPanel
+        assets={assets}
+        open={assetPanelOpen}
+        onClose={() => setAssetPanelOpen(false)}
+        onRemoveAsset={removeAsset}
+        onClearAssets={clearAssets}
+      />
+      {reviewOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+          <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-xl max-w-md w-full p-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2"
+              onClick={() => setReviewOpen(false)}
+              aria-label="Close review"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <Review />
+          </div>
+        </div>
+      )}
       {cropOpenId && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onMouseUp={onPreviewMouseUpLeave} onMouseLeave={onPreviewMouseUpLeave}>
           <div className="w-full max-w-[720px] bg-white dark:bg-neutral-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-neutral-700 p-6">
