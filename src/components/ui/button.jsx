@@ -1,6 +1,6 @@
 
 import React from 'react'
-export const Button = ({ variant='default', size='md', className='', ...props }) => {
+export const Button = ({ type='button', variant='default', size='md', className='', ...props }) => {
   const base = 'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-400 disabled:opacity-50 disabled:pointer-events-none'
   const variants = {
     default: 'bg-neutral-900 text-white hover:bg-neutral-800 border border-neutral-900',
@@ -11,5 +11,5 @@ export const Button = ({ variant='default', size='md', className='', ...props })
   }
   const sizes = { sm: 'h-8 px-2', md: 'h-10 px-4', lg: 'h-12 px-6', icon: 'h-10 w-10 p-0' }
   const cls = [base, variants[variant]||variants.default, sizes[size]||sizes.md, className].join(' ')
-  return <button className={cls} {...props} />
+  return <button type={type} className={cls} {...props} />
 }
