@@ -14,7 +14,7 @@ export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onCl
   const filtered = assets.filter((a) => a.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <div className="fixed inset-y-0 left-0 z-40 flex">
+    <div className="fixed left-0 z-40 flex bottom-0" style={{ top: "var(--header-height)" }}>
       <div
         className={cx(
           "h-full flex flex-col bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700 transition-all overflow-hidden",

@@ -5,7 +5,7 @@ const cx = (...cls) => cls.filter(Boolean).join(" ");
 
 export default function SettingsDrawer({ open, onToggle, children }) {
   return (
-    <div className="fixed inset-y-0 right-0 z-40 flex">
+    <div className="fixed right-0 z-40 flex bottom-0" style={{ top: "var(--header-height)" }}>
       <button
         className="h-10 w-10 mt-4 flex items-center justify-center bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-l-md shadow-md"
         onClick={onToggle}
