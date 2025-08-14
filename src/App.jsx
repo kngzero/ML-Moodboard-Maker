@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
-import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X } from "lucide-react";
+import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X, Archive, ArchiveRestore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import TemplateSelector, { TEMPLATES } from "@/components/TemplateSelector";
 import SafeMarginOverlay from "@/components/SafeMarginOverlay";
 import VirtualImage from "@/components/VirtualImage";
 import pkg from "../package.json";
+import { zipSync, unzipSync, strToU8, strFromU8 } from "fflate";
 
 const cx = (...cls) => cls.filter(Boolean).join(" ");
 const isTauri = () => typeof window !== "undefined" && (window.__TAURI__ || window.__TAURI_IPC__ || window.__TAURI_INTERNALS__);
@@ -75,6 +76,7 @@ export default function MethodMosaic() {
   const [infoOpen, setInfoOpen] = useState(false);
   const boardRef = useRef(null);
   const fileInputRef = useRef(null);
+  const boardFileRef = useRef(null);
   const gridRef = useRef(null);
   const spanDragRef = useRef(null);
   const infoButtonRef = useRef(null);
@@ -377,6 +379,10 @@ export default function MethodMosaic() {
   function downloadDataUrl(dataUrl, filename) { const a = document.createElement("a"); a.href = dataUrl; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
   async function blobToDataURL(blob) { return await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); }); }
   function dataUrlToBytes(dataUrl) { const [meta, b64] = dataUrl.split(","); const bin = atob(b64); const bytes = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i); return bytes; }
+  function downloadBlob(blob, filename) { const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 0); }
+  function dataUrlToUint8(dataUrl) { const [meta, b64] = dataUrl.split(","); const mime = /data:(.*?);base64/.exec(meta)?.[1] || "application/octet-stream"; const bin = atob(b64); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); const ext = mime.split("/")[1] || "bin"; return { u8, mime, ext }; }
+  function uint8ToDataUrl(u8, mime) { let bin = ""; for (let i = 0; i < u8.length; i++) bin += String.fromCharCode(u8[i]); return `data:${mime};base64,${btoa(bin)}`; }
+  function extToMime(ext) { ext = ext.toLowerCase(); if (ext === "jpg" || ext === "jpeg") return "image/jpeg"; if (ext === "png") return "image/png"; if (ext === "webp") return "image/webp"; if (ext === "gif") return "image/gif"; if (ext === "bmp") return "image/bmp"; if (ext === "svg") return "image/svg+xml"; return "application/octet-stream"; }
   async function readFileAsDataURL(file){ return await new Promise((res, rej)=>{ const fr = new FileReader(); fr.onload = ()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); }); }
   async function readFileAsAsset(file) {
     const src = await readFileAsDataURL(file);
@@ -384,6 +390,8 @@ export default function MethodMosaic() {
     return { id: crypto.randomUUID(), src, w, h, name: file.name || "image" };
   }
   async function getImageSize(src){ return await new Promise((resolve, reject)=>{ const img = new Image(); img.onload = ()=>resolve({ w: img.naturalWidth, h: img.naturalHeight }); img.onerror = reject; img.src = src; }); }
+  const saveBoardFile = async () => { try { const files = {}; const assetMeta = []; assets.forEach((a) => { const { u8, ext } = dataUrlToUint8(a.src); const fname = `${a.id}.${ext}`; files[`assets/${fname}`] = u8; assetMeta.push({ id: a.id, name: a.name, w: a.w, h: a.h, file: fname }); }); let logoMeta = null; if (logoSrc) { const { u8, ext } = dataUrlToUint8(logoSrc); const fname = `logo.${ext}`; files[`assets/${fname}`] = u8; logoMeta = { file: fname, size: logoSize, rounded: logoRounded }; } const meta = { schema: 1, appVersion: pkg.version, board: { title: boardTitle, description: boardDescription, showText, gap, columns, rows, layoutMode, rounded, shadow, showSafeMargin, boardPadding, boardWidth, boardHeight, boardAspect, bg, selectedTemplate, images: images.map(({ id, assetId, colSpan, rowSpan, crop }) => ({ id, assetId, colSpan, rowSpan, crop })), logo: logoMeta }, assets: assetMeta }; files["meta.json"] = strToU8(JSON.stringify(meta, null, 2)); const zipped = zipSync(files, { level: 0 }); if (isTauri()) { const dialogMod = "@tauri-apps/api/dialog"; const fsMod = "@tauri-apps/api/fs"; const { save } = await import(/* @vite-ignore */ dialogMod); const { writeBinaryFile } = await import(/* @vite-ignore */ fsMod); const path = await save({ defaultPath: `${boardTitle || "board"}.mlmboard` }); if (path) await writeBinaryFile({ path, contents: zipped }); } else { downloadBlob(new Blob([zipped], { type: "application/zip" }), `${boardTitle || "board"}.mlmboard`); } } catch (err) { console.error("Failed to save board", err); } };
+  const loadBoardFile = async (file) => { try { const u8 = new Uint8Array(await file.arrayBuffer()); const files = unzipSync(u8); const meta = JSON.parse(strFromU8(files["meta.json"])); if (!meta.schema || meta.schema > 1) { alert("Unsupported board file version"); return; } const loadedAssets = []; (meta.assets || []).forEach((a) => { const data = files[`assets/${a.file}`]; if (!data) return; const mime = extToMime(a.file.split('.').pop() || ""); const src = uint8ToDataUrl(data, mime); loadedAssets.push({ id: a.id, src, w: a.w, h: a.h, name: a.name }); }); setAssets(loadedAssets); setImages((meta.board?.images || []).map((img) => { const asset = loadedAssets.find((a) => a.id === img.assetId); return withDefaultCrop({ ...img, src: asset?.src, w: asset?.w, h: asset?.h }); })); originalOrderRef.current = (meta.board?.images || []).map((i) => i.id); setBoardTitle(meta.board?.title || ""); setBoardDescription(meta.board?.description || ""); setShowText(!!meta.board?.showText); setGap(meta.board?.gap ?? 12); setColumns(meta.board?.columns ?? 4); setRows(meta.board?.rows ?? 3); setLayoutMode(meta.board?.layoutMode || "auto"); setRounded(meta.board?.rounded ?? true); setShadow(meta.board?.shadow ?? true); setShowSafeMargin(!!meta.board?.showSafeMargin); setBoardPadding(meta.board?.boardPadding ?? 24); setBoardWidth(meta.board?.boardWidth ?? null); setBoardHeight(meta.board?.boardHeight ?? null); setBoardAspect(meta.board?.boardAspect); setBg(meta.board?.bg || "#ffffff"); setSelectedTemplate(meta.board?.selectedTemplate || "custom"); if (meta.board?.logo && meta.board.logo.file) { const data = files[`assets/${meta.board.logo.file}`]; if (data) { const mime = extToMime(meta.board.logo.file.split('.').pop() || ""); setLogoSrc(uint8ToDataUrl(data, mime)); setLogoSize(meta.board.logo.size ?? 40); setLogoRounded(meta.board.logo.rounded ?? true); } } else setLogoSrc(null); } catch (err) { console.error("Failed to load board", err); } };
   useEffect(() => { const onKey = (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); handleExport(); } }; window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey); }, [exportFormat]);
   const openCrop = (id) => { const img = images.find((i) => i.id === id); const c = withDefaultCrop(img).crop; setTempCrop({ ...c }); setCropOpenId(id); };
   const closeCrop = () => setCropOpenId(null);
@@ -640,6 +648,14 @@ export default function MethodMosaic() {
                 <div className="space-y-2"><Label className="text-sm">Background</Label><div className="flex items-center gap-3"><Input type="color" value={bg} onChange={(e) => setBg(e.target.value)} className="w-16 h-10 p-1 cursor-pointer"/><Input type="text" value={bg} onChange={(e) => setBg(e.target.value)} /></div></div>
               </>
             )}
+          </div>
+          <div className="space-y-3">
+            <Label className="text-sm">Project</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Button onClick={saveBoardFile} className="w-full"><Archive className="h-4 w-4 mr-2"/>Save</Button>
+              <Button variant="secondary" onClick={() => boardFileRef.current?.click()} className="w-full"><ArchiveRestore className="h-4 w-4 mr-2"/>Load</Button>
+            </div>
+            <input ref={boardFileRef} type="file" accept=".mlmboard" className="hidden" onChange={(e)=>{ const f = e.target.files?.[0]; if(f) loadBoardFile(f); e.target.value=""; }} />
           </div>
           <div className="space-y-3">
             <Label className="text-sm">Export</Label>
