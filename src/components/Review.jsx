@@ -14,7 +14,7 @@ export default function Review() {
     const url = `https://github.com/${username}/${repo}/issues/new?title=${encodeURIComponent(
         "Review: Method Mosaic"
     )}&body=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
