@@ -406,13 +406,36 @@ export default function MethodMosaic() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleExport]);
   const openCrop = (id) => { const img = images.find((i) => i.id === id); const c = withDefaultCrop(img).crop; setTempCrop({ ...c }); setCropOpenId(id); };
-  const closeCrop = () => setCropOpenId(null);
-  const applyCrop = () => { if (!cropOpenId) return; setImages((prev) => prev.map((im) => (im.id === cropOpenId ? { ...im, crop: { ...tempCrop } } : im))); setCropOpenId(null); };
+  const closeCrop = useCallback(() => setCropOpenId(null), []);
+  const applyCrop = useCallback(() => {
+    if (!cropOpenId) return;
+    setImages((prev) =>
+      prev.map((im) => (im.id === cropOpenId ? { ...im, crop: { ...tempCrop } } : im))
+    );
+    setCropOpenId(null);
+  }, [cropOpenId, tempCrop]);
   const onPreviewMouseDown = (e) => { if (!previewRef.current) return; dragStateRef.current = { dragging: true, startX: e.clientX, startY: e.clientY, startCrop: { ...tempCrop } }; };
   const onPreviewMouseMove = (e) => { const st = dragStateRef.current; if (!st || !st.dragging || !previewRef.current) return; const box = previewRef.current.getBoundingClientRect(); const dx = ((e.clientX - st.startX) / box.width) * 100; const dy = ((e.clientY - st.startY) / box.height) * 100; setTempCrop((c) => ({ ...c, x: clamp(st.startCrop.x + dx, 0, 100), y: clamp(st.startCrop.y + dy, 0, 100) })); };
   const onPreviewMouseUpLeave = () => { if (dragStateRef.current) dragStateRef.current.dragging = false; };
   useEffect(() => { const el = previewRef.current; if (!el) return; const onWheel = (e) => { e.preventDefault(); setTempCrop((c) => ({ ...c, zoom: clamp((c.zoom || 1) + (e.deltaY > 0 ? -0.05 : 0.05), 1, 4) })); }; el.addEventListener("wheel", onWheel, { passive: false }); return () => el.removeEventListener("wheel", onWheel); }, [cropOpenId]);
-  useEffect(() => { const onKey = (e) => { if (!cropOpenId) return; if (e.key === "Escape") return closeCrop(); if (e.key === "Enter") return applyCrop(); const step = e.shiftKey ? 2 : 0.5; if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) { e.preventDefault(); setTempCrop((c) => ({ ...c, x: clamp(c.x + (e.key === "ArrowRight" ? step : e.key === "ArrowLeft" ? -step : 0), 0, 100), y: clamp(c.y + (e.key === "ArrowDown" ? step : e.key === "ArrowUp" ? -step : 0), 0, 100) })); } }; window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey); }, [cropOpenId]);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!cropOpenId) return;
+      if (e.key === "Escape") return closeCrop();
+      if (e.key === "Enter") return applyCrop();
+      const step = e.shiftKey ? 2 : 0.5;
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+        e.preventDefault();
+        setTempCrop((c) => ({
+          ...c,
+          x: clamp(c.x + (e.key === "ArrowRight" ? step : e.key === "ArrowLeft" ? -step : 0), 0, 100),
+          y: clamp(c.y + (e.key === "ArrowDown" ? step : e.key === "ArrowUp" ? -step : 0), 0, 100),
+        }));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [cropOpenId, closeCrop, applyCrop]);
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const SelectBox = ({ value, onChange, children }) => (<select className="input" value={value} onChange={(e) => onChange(e.target.value)}>{children}</select>);
   function onResizeStart(id){ return (e)=>{ if(layoutMode !== "square") return; const it = images.find(i=>i.id===id); if(!it) return; spanDragRef.current = { id, sx: e.clientX, sy: e.clientY, baseC: it.colSpan || 1, baseR: it.rowSpan || 1 }; window.addEventListener("mousemove", onResizing); window.addEventListener("mouseup", onResizeEnd); }; }
