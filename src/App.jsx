@@ -424,7 +424,7 @@ export default function MethodMosaic() {
         <div className="flex items-center gap-2">
           <svg
             viewBox="0 0 40 40"
-            className="h-6 w-6 text-indigo-500"
+            className="h-6 w-6 text-black"
             fill="currentColor"
             aria-hidden="true"
           >
