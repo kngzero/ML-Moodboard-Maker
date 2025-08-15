@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
-import { Settings2, LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X, Archive, ArchiveRestore } from "lucide-react";
+import { LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X, Archive, ArchiveRestore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -607,7 +607,7 @@ export default function MethodMosaic() {
     <SettingsDrawer open={settingsOpen} onToggle={() => setSettingsOpen((v) => !v)}>
       <div className="h-full overflow-y-auto space-y-6">
         <div className="pb-2">
-          <h2 className="flex items-center gap-2 text-xl font-semibold"><Settings2 className="h-5 w-5"/> Moodboard Settings</h2>
+          <h2 className="text-xl font-semibold">Moodboard Settings</h2>
         </div>
         <div className="space-y-6">
           <div className="space-y-4">
