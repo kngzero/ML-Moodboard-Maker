@@ -65,6 +65,7 @@ export default function MethodMosaic() {
   const [boardWidth, setBoardWidth] = useState(null);
   const [boardHeight, setBoardHeight] = useState(null);
   const [boardAspect, setBoardAspect] = useState(undefined);
+  const [zoom, setZoom] = useState(100);
   const [bg, setBg] = useState("#ffffff");
   const [brandingOpen, setBrandingOpen] = useState(true);
   const [layoutOpen, setLayoutOpen] = useState(true);
@@ -280,6 +281,8 @@ export default function MethodMosaic() {
   async function withSnapshot(cb) {
     setSnapshotting(true);
     setRenderAllImages(true);
+    const prevZoom = zoom;
+    setZoom(100);
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     const node = boardRef.current;
     let width = 0;
@@ -299,6 +302,7 @@ export default function MethodMosaic() {
         node.style.width = prev.width;
         node.style.height = prev.height;
       }
+      setZoom(prevZoom);
       setSnapshotting(false);
       setRenderAllImages(false);
       await new Promise((r) => requestAnimationFrame(r));
@@ -393,8 +397,8 @@ export default function MethodMosaic() {
     return { id: crypto.randomUUID(), src, w, h, name: file.name || "image" };
   }
   async function getImageSize(src){ return await new Promise((resolve, reject)=>{ const img = new Image(); img.onload = ()=>resolve({ w: img.naturalWidth, h: img.naturalHeight }); img.onerror = reject; img.src = src; }); }
-  const saveBoardFile = async () => { try { const files = {}; const assetMeta = []; assets.forEach((a) => { const { u8, ext } = dataUrlToUint8(a.src); const fname = `${a.id}.${ext}`; files[`assets/${fname}`] = u8; assetMeta.push({ id: a.id, name: a.name, w: a.w, h: a.h, file: fname }); }); let logoMeta = null; if (logoSrc) { const { u8, ext } = dataUrlToUint8(logoSrc); const fname = `logo.${ext}`; files[`assets/${fname}`] = u8; logoMeta = { file: fname, size: logoSize, rounded: logoRounded }; } const meta = { schema: 1, appVersion: pkg.version, board: { title: boardTitle, description: boardDescription, showText, gap, columns, rows, layoutMode, rounded, shadow, showSafeMargin, boardPadding, boardWidth, boardHeight, boardAspect, bg, selectedTemplate, images: images.map(({ id, assetId, colSpan, rowSpan, crop }) => ({ id, assetId, colSpan, rowSpan, crop })), logo: logoMeta }, assets: assetMeta }; files["meta.json"] = strToU8(JSON.stringify(meta, null, 2)); const zipped = zipSync(files, { level: 0 }); if (isTauri()) { const dialogMod = "@tauri-apps/api/dialog"; const fsMod = "@tauri-apps/api/fs"; const { save } = await import(/* @vite-ignore */ dialogMod); const { writeBinaryFile } = await import(/* @vite-ignore */ fsMod); const path = await save({ defaultPath: `${boardTitle || "board"}.mlmboard` }); if (path) await writeBinaryFile({ path, contents: zipped }); } else { downloadBlob(new Blob([zipped], { type: "application/zip" }), `${boardTitle || "board"}.mlmboard`); } } catch (err) { console.error("Failed to save board", err); } };
-  const loadBoardFile = async (file) => { try { const u8 = new Uint8Array(await file.arrayBuffer()); const files = unzipSync(u8); const meta = JSON.parse(strFromU8(files["meta.json"])); if (!meta.schema || meta.schema > 1) { alert("Unsupported board file version"); return; } const loadedAssets = []; (meta.assets || []).forEach((a) => { const data = files[`assets/${a.file}`]; if (!data) return; const mime = extToMime(a.file.split('.').pop() || ""); const src = uint8ToDataUrl(data, mime); loadedAssets.push({ id: a.id, src, w: a.w, h: a.h, name: a.name }); }); setAssets(loadedAssets); setImages((meta.board?.images || []).map((img) => { const asset = loadedAssets.find((a) => a.id === img.assetId); return withDefaultCrop({ ...img, src: asset?.src, w: asset?.w, h: asset?.h }); })); originalOrderRef.current = (meta.board?.images || []).map((i) => i.id); setBoardTitle(meta.board?.title || ""); setBoardDescription(meta.board?.description || ""); setShowText(!!meta.board?.showText); setGap(meta.board?.gap ?? 12); setColumns(meta.board?.columns ?? 4); setRows(meta.board?.rows ?? 3); setLayoutMode(meta.board?.layoutMode || "auto"); setRounded(meta.board?.rounded ?? true); setShadow(meta.board?.shadow ?? true); setShowSafeMargin(!!meta.board?.showSafeMargin); setBoardPadding(meta.board?.boardPadding ?? 24); setBoardWidth(meta.board?.boardWidth ?? null); setBoardHeight(meta.board?.boardHeight ?? null); setBoardAspect(meta.board?.boardAspect); setBg(meta.board?.bg || "#ffffff"); setSelectedTemplate(meta.board?.selectedTemplate || "custom"); if (meta.board?.logo && meta.board.logo.file) { const data = files[`assets/${meta.board.logo.file}`]; if (data) { const mime = extToMime(meta.board.logo.file.split('.').pop() || ""); setLogoSrc(uint8ToDataUrl(data, mime)); setLogoSize(meta.board.logo.size ?? 40); setLogoRounded(meta.board.logo.rounded ?? true); } } else setLogoSrc(null); } catch (err) { console.error("Failed to load board", err); } };
+  const saveBoardFile = async () => { try { const files = {}; const assetMeta = []; assets.forEach((a) => { const { u8, ext } = dataUrlToUint8(a.src); const fname = `${a.id}.${ext}`; files[`assets/${fname}`] = u8; assetMeta.push({ id: a.id, name: a.name, w: a.w, h: a.h, file: fname }); }); let logoMeta = null; if (logoSrc) { const { u8, ext } = dataUrlToUint8(logoSrc); const fname = `logo.${ext}`; files[`assets/${fname}`] = u8; logoMeta = { file: fname, size: logoSize, rounded: logoRounded }; } const meta = { schema: 1, appVersion: pkg.version, board: { title: boardTitle, description: boardDescription, showText, gap, columns, rows, layoutMode, rounded, shadow, showSafeMargin, boardPadding, boardWidth, boardHeight, boardAspect, zoom, bg, selectedTemplate, images: images.map(({ id, assetId, colSpan, rowSpan, crop }) => ({ id, assetId, colSpan, rowSpan, crop })), logo: logoMeta }, assets: assetMeta }; files["meta.json"] = strToU8(JSON.stringify(meta, null, 2)); const zipped = zipSync(files, { level: 0 }); if (isTauri()) { const dialogMod = "@tauri-apps/api/dialog"; const fsMod = "@tauri-apps/api/fs"; const { save } = await import(/* @vite-ignore */ dialogMod); const { writeBinaryFile } = await import(/* @vite-ignore */ fsMod); const path = await save({ defaultPath: `${boardTitle || "board"}.mlmboard` }); if (path) await writeBinaryFile({ path, contents: zipped }); } else { downloadBlob(new Blob([zipped], { type: "application/zip" }), `${boardTitle || "board"}.mlmboard`); } } catch (err) { console.error("Failed to save board", err); } };
+  const loadBoardFile = async (file) => { try { const u8 = new Uint8Array(await file.arrayBuffer()); const files = unzipSync(u8); const meta = JSON.parse(strFromU8(files["meta.json"])); if (!meta.schema || meta.schema > 1) { alert("Unsupported board file version"); return; } const loadedAssets = []; (meta.assets || []).forEach((a) => { const data = files[`assets/${a.file}`]; if (!data) return; const mime = extToMime(a.file.split('.').pop() || ""); const src = uint8ToDataUrl(data, mime); loadedAssets.push({ id: a.id, src, w: a.w, h: a.h, name: a.name }); }); setAssets(loadedAssets); setImages((meta.board?.images || []).map((img) => { const asset = loadedAssets.find((a) => a.id === img.assetId); return withDefaultCrop({ ...img, src: asset?.src, w: asset?.w, h: asset?.h }); })); originalOrderRef.current = (meta.board?.images || []).map((i) => i.id); setBoardTitle(meta.board?.title || ""); setBoardDescription(meta.board?.description || ""); setShowText(!!meta.board?.showText); setGap(meta.board?.gap ?? 12); setColumns(meta.board?.columns ?? 4); setRows(meta.board?.rows ?? 3); setLayoutMode(meta.board?.layoutMode || "auto"); setRounded(meta.board?.rounded ?? true); setShadow(meta.board?.shadow ?? true); setShowSafeMargin(!!meta.board?.showSafeMargin); setBoardPadding(meta.board?.boardPadding ?? 24); setBoardWidth(meta.board?.boardWidth ?? null); setBoardHeight(meta.board?.boardHeight ?? null); setBoardAspect(meta.board?.boardAspect); setZoom(meta.board?.zoom ?? 100); setBg(meta.board?.bg || "#ffffff"); setSelectedTemplate(meta.board?.selectedTemplate || "custom"); if (meta.board?.logo && meta.board.logo.file) { const data = files[`assets/${meta.board.logo.file}`]; if (data) { const mime = extToMime(meta.board.logo.file.split('.').pop() || ""); setLogoSrc(uint8ToDataUrl(data, mime)); setLogoSize(meta.board.logo.size ?? 40); setLogoRounded(meta.board.logo.rounded ?? true); } } else setLogoSrc(null); } catch (err) { console.error("Failed to load board", err); } };
   useEffect(() => {
     const onKey = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
@@ -535,19 +539,23 @@ export default function MethodMosaic() {
           <p className="text-sm text-neutral-500">Drop images • Paste • {canReorder ? "Drag tiles to reorder" : "Switch to Grid or Square to reorder"} • Reset order</p>
           <Card className="bg-transparent rounded-none shadow-none">
             <CardContent className="p-4 md:p-6">
-              <div className={cx("relative w-full min-h-[60vh] border border-neutral-200 dark:border-neutral-700", images.length === 0 ? "grid place-items-center" : "")} onDrop={onDrop} onDragOver={onDragOverBoard} onPaste={onPaste}>
+              <div className={cx("relative w-full min-h-[60vh] overflow-auto border border-neutral-200 dark:border-neutral-700", images.length === 0 ? "grid place-items-center" : "")} onDrop={onDrop} onDragOver={onDragOverBoard} onPaste={onPaste}>
                 {images.length === 0 && (<div className="text-center p-8"><div className="text-sm text-neutral-500 mb-3">Drop images here, paste from clipboard, or use “Add Images”.</div><Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Select Files</Button></div>)}
                   <div
-                    ref={boardRef}
-                    className="relative w-full"
-                    style={{
-                      background: bg,
-                      padding: boardPadding,
-                      width: boardWidth ? `${boardWidth}px` : undefined,
-                    height: boardHeight ? `${boardHeight}px` : undefined,
-                    aspectRatio: boardAspect,
-                  }}
-                >
+                    className="relative"
+                    style={{ transform: `scale(${zoom/100})`, transformOrigin: "top left" }}
+                  >
+                    <div
+                      ref={boardRef}
+                      className="relative w-full"
+                      style={{
+                        background: bg,
+                        padding: boardPadding,
+                        width: boardWidth ? `${boardWidth}px` : undefined,
+                        height: boardHeight ? `${boardHeight}px` : undefined,
+                        aspectRatio: boardAspect,
+                      }}
+                    >
                     {showText && (boardTitle || boardDescription || logoSrc) && (
                       <header className="mb-6 flex items-center gap-3">
                         {logoSrc && (<img src={logoSrc} alt="logo" style={{ width: logoSize, height: logoSize, borderRadius: logoRounded ? "9999px" : "12px" }} className="shrink-0 object-cover" />)}
@@ -596,6 +604,7 @@ export default function MethodMosaic() {
                     })}
                     </div>
                     {showSafeMargin && <SafeMarginOverlay targetRef={boardRef} />}
+                    </div>
                   </div>
                   {exporting && (<div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/70 dark:bg-black/50 text-sm">Exporting…</div>)}
                 </div>
@@ -659,7 +668,12 @@ export default function MethodMosaic() {
                     <option value="square">Flexible grid (resizable tiles)</option>
                   </SelectBox>
                 </div>
-                <div className={cx("grid gap-4", layoutMode === "grid" ? "grid-cols-2" : "grid-cols-1")}>
+                <div className="space-y-2">
+                  <Label className="text-sm">Zoom</Label>
+                  <div className="px-1"><Slider min={50} max={200} step={10} value={[zoom]} onValueChange={([v]) => setZoom(v)} /></div>
+                  <div className="text-xs text-neutral-500">{zoom}%</div>
+                </div>
+                <div className={cx("grid gap-4", layoutMode === "grid" ? "grid-cols-2" : "grid-cols-1")}> 
                   <div className="space-y-2">
                     <Label className="text-sm">Columns</Label>
                     <div className="px-1"><Slider min={1} max={12} step={1} value={[columns]} onValueChange={([v]) => setColumns(v)} /></div>
