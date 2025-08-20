@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
-import { LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X, Archive, ArchiveRestore } from "lucide-react";
+import { LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X, Archive, ArchiveRestore, Undo2, Redo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,8 +61,8 @@ const BRANDING_PRESETS = {
 };
 
 export default function MethodMosaic() {
-  const [images, setImages] = useState(/** @type {BoardImage[]} */([]));
-  const [assets, setAssets] = useState([]);
+  const [images, _setImages] = useState(/** @type {BoardImage[]} */([]));
+  const [assets, _setAssets] = useState([]);
   const [assetPanelOpen, setAssetPanelOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -73,30 +73,141 @@ export default function MethodMosaic() {
   const [tempCrop, setTempCrop] = useState({ x: 50, y: 50, zoom: 1 });
   const previewRef = useRef(null);
   const dragStateRef = useRef(null);
-  const [boardTitle, setBoardTitle] = useState("");
-  const [boardDescription, setBoardDescription] = useState("");
-  const [showText, setShowText] = useState(true);
-  const [logoSrc, setLogoSrc] = useState(null);
-  const [logoSize, setLogoSize] = useState(BRANDING_PRESETS["left-m"].logo);
-  const [logoRounded, setLogoRounded] = useState(true);
+  const [boardTitle, _setBoardTitle] = useState("");
+  const [boardDescription, _setBoardDescription] = useState("");
+  const [showText, _setShowText] = useState(true);
+  const [logoSrc, _setLogoSrc] = useState(null);
+  const [logoSize, _setLogoSize] = useState(BRANDING_PRESETS["left-m"].logo);
+  const [logoRounded, _setLogoRounded] = useState(true);
   const logoInputRef = useRef(null);
-  const [brandingPreset, setBrandingPreset] = useState("left-m");
-  const [titleClass, setTitleClass] = useState(BRANDING_PRESETS["left-m"].title);
-  const [descClass, setDescClass] = useState(BRANDING_PRESETS["left-m"].desc);
-  const [gap, setGap] = useState(12);
-  const [columns, setColumns] = useState(4);
-  const [rows, setRows] = useState(3);
-  const [layoutMode, setLayoutMode] = useState("auto");
-  const [rounded, setRounded] = useState(true);
-  const [shadow, setShadow] = useState(true);
-  const [showSafeMargin, setShowSafeMargin] = useState(false);
-  const [boardPadding, setBoardPadding] = useState(24);
-  const [selectedTemplate, setSelectedTemplate] = useState("custom");
-  const [boardWidth, setBoardWidth] = useState(null);
-  const [boardHeight, setBoardHeight] = useState(null);
-  const [boardAspect, setBoardAspect] = useState(undefined);
-  const [zoom, setZoom] = useState(100);
-  const [bg, setBg] = useState("#ffffff");
+  const [brandingPreset, _setBrandingPreset] = useState("left-m");
+  const [titleClass, _setTitleClass] = useState(BRANDING_PRESETS["left-m"].title);
+  const [descClass, _setDescClass] = useState(BRANDING_PRESETS["left-m"].desc);
+  const [gap, _setGap] = useState(12);
+  const [columns, _setColumns] = useState(4);
+  const [rows, _setRows] = useState(3);
+  const [layoutMode, _setLayoutMode] = useState("auto");
+  const [rounded, _setRounded] = useState(true);
+  const [shadow, _setShadow] = useState(true);
+  const [showSafeMargin, _setShowSafeMargin] = useState(false);
+  const [boardPadding, _setBoardPadding] = useState(24);
+  const [selectedTemplate, _setSelectedTemplate] = useState("custom");
+  const [boardWidth, _setBoardWidth] = useState(null);
+  const [boardHeight, _setBoardHeight] = useState(null);
+  const [boardAspect, _setBoardAspect] = useState(undefined);
+  const [zoom, _setZoom] = useState(100);
+  const [bg, _setBg] = useState("#ffffff");
+
+  const [history, setHistory] = useState([]);
+  const [future, setFuture] = useState([]);
+
+  const getSnapshot = useCallback(() => ({
+    images: structuredClone(images),
+    assets: structuredClone(assets),
+    boardTitle,
+    boardDescription,
+    showText,
+    logoSrc,
+    logoSize,
+    logoRounded,
+    brandingPreset,
+    titleClass,
+    descClass,
+    gap,
+    columns,
+    rows,
+    layoutMode,
+    rounded,
+    shadow,
+    showSafeMargin,
+    boardPadding,
+    selectedTemplate,
+    boardWidth,
+    boardHeight,
+    boardAspect,
+    zoom,
+    bg,
+  }), [images, assets, boardTitle, boardDescription, showText, logoSrc, logoSize, logoRounded, brandingPreset, titleClass, descClass, gap, columns, rows, layoutMode, rounded, shadow, showSafeMargin, boardPadding, selectedTemplate, boardWidth, boardHeight, boardAspect, zoom, bg]);
+
+  const pushHistory = useCallback(() => {
+    setHistory((h) => [...h, getSnapshot()]);
+    setFuture([]);
+  }, [getSnapshot]);
+
+  const setImages = useCallback((v) => { pushHistory(); _setImages(v); }, [pushHistory]);
+  const setAssets = useCallback((v) => { pushHistory(); _setAssets(v); }, [pushHistory]);
+  const setBoardTitle = useCallback((v) => { pushHistory(); _setBoardTitle(v); }, [pushHistory]);
+  const setBoardDescription = useCallback((v) => { pushHistory(); _setBoardDescription(v); }, [pushHistory]);
+  const setShowText = useCallback((v) => { pushHistory(); _setShowText(v); }, [pushHistory]);
+  const setLogoSrc = useCallback((v) => { pushHistory(); _setLogoSrc(v); }, [pushHistory]);
+  const setLogoSize = useCallback((v) => { pushHistory(); _setLogoSize(v); }, [pushHistory]);
+  const setLogoRounded = useCallback((v) => { pushHistory(); _setLogoRounded(v); }, [pushHistory]);
+  const setBrandingPreset = useCallback((v) => { pushHistory(); _setBrandingPreset(v); }, [pushHistory]);
+  const setTitleClass = useCallback((v) => { pushHistory(); _setTitleClass(v); }, [pushHistory]);
+  const setDescClass = useCallback((v) => { pushHistory(); _setDescClass(v); }, [pushHistory]);
+  const setGap = useCallback((v) => { pushHistory(); _setGap(v); }, [pushHistory]);
+  const setColumns = useCallback((v) => { pushHistory(); _setColumns(v); }, [pushHistory]);
+  const setRows = useCallback((v) => { pushHistory(); _setRows(v); }, [pushHistory]);
+  const setLayoutMode = useCallback((v) => { pushHistory(); _setLayoutMode(v); }, [pushHistory]);
+  const setRounded = useCallback((v) => { pushHistory(); _setRounded(v); }, [pushHistory]);
+  const setShadow = useCallback((v) => { pushHistory(); _setShadow(v); }, [pushHistory]);
+  const setShowSafeMargin = useCallback((v) => { pushHistory(); _setShowSafeMargin(v); }, [pushHistory]);
+  const setBoardPadding = useCallback((v) => { pushHistory(); _setBoardPadding(v); }, [pushHistory]);
+  const setSelectedTemplate = useCallback((v) => { pushHistory(); _setSelectedTemplate(v); }, [pushHistory]);
+  const setBoardWidth = useCallback((v) => { pushHistory(); _setBoardWidth(v); }, [pushHistory]);
+  const setBoardHeight = useCallback((v) => { pushHistory(); _setBoardHeight(v); }, [pushHistory]);
+  const setBoardAspect = useCallback((v) => { pushHistory(); _setBoardAspect(v); }, [pushHistory]);
+  const setZoom = useCallback((v) => { pushHistory(); _setZoom(v); }, [pushHistory]);
+  const setBg = useCallback((v) => { pushHistory(); _setBg(v); }, [pushHistory]);
+
+  const applySnapshot = useCallback((snap) => {
+    _setImages(snap.images || []);
+    _setAssets(snap.assets || []);
+    _setBoardTitle(snap.boardTitle || "");
+    _setBoardDescription(snap.boardDescription || "");
+    _setShowText(snap.showText ?? true);
+    _setLogoSrc(snap.logoSrc || null);
+    _setLogoSize(snap.logoSize ?? BRANDING_PRESETS["left-m"].logo);
+    _setLogoRounded(snap.logoRounded ?? true);
+    _setBrandingPreset(snap.brandingPreset || "left-m");
+    _setTitleClass(snap.titleClass || BRANDING_PRESETS["left-m"].title);
+    _setDescClass(snap.descClass || BRANDING_PRESETS["left-m"].desc);
+    _setGap(snap.gap ?? 12);
+    _setColumns(snap.columns ?? 4);
+    _setRows(snap.rows ?? 3);
+    _setLayoutMode(snap.layoutMode || "auto");
+    _setRounded(snap.rounded ?? true);
+    _setShadow(snap.shadow ?? true);
+    _setShowSafeMargin(snap.showSafeMargin ?? false);
+    _setBoardPadding(snap.boardPadding ?? 24);
+    _setSelectedTemplate(snap.selectedTemplate || "custom");
+    _setBoardWidth(snap.boardWidth ?? null);
+    _setBoardHeight(snap.boardHeight ?? null);
+    _setBoardAspect(snap.boardAspect);
+    _setZoom(snap.zoom ?? 100);
+    _setBg(snap.bg || "#ffffff");
+  }, []);
+
+  const undo = useCallback(() => {
+    setHistory((h) => {
+      if (!h.length) return h;
+      const prev = h[h.length - 1];
+      setFuture((f) => [getSnapshot(), ...f]);
+      applySnapshot(prev);
+      return h.slice(0, -1);
+    });
+  }, [applySnapshot, getSnapshot]);
+
+  const redo = useCallback(() => {
+    setFuture((f) => {
+      if (!f.length) return f;
+      const next = f[0];
+      setHistory((h) => [...h, getSnapshot()]);
+      applySnapshot(next);
+      return f.slice(1);
+    });
+  }, [applySnapshot, getSnapshot]);
+
   const [brandingOpen, setBrandingOpen] = useState(true);
   const [layoutOpen, setLayoutOpen] = useState(true);
   const [exportFormat, setExportFormat] = useState("png");
@@ -444,10 +555,18 @@ export default function MethodMosaic() {
         e.preventDefault();
         handleExport();
       }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [handleExport]);
+  }, [handleExport, undo, redo]);
   const openCrop = (id) => { const img = images.find((i) => i.id === id); const c = withDefaultCrop(img).crop; setTempCrop({ ...c }); setCropOpenId(id); };
   const closeCrop = useCallback(() => setCropOpenId(null), []);
   const applyCrop = useCallback(() => {
@@ -561,6 +680,12 @@ export default function MethodMosaic() {
           </Button>
           <Button variant="ghost" size="sm" onClick={resetOrder}>
             <RotateCcw className="h-4 w-4 mr-1" />Reset Order
+          </Button>
+          <Button variant="ghost" size="sm" onClick={undo} disabled={!history.length}>
+            <Undo2 className="h-4 w-4 mr-1" />Undo
+          </Button>
+          <Button variant="ghost" size="sm" onClick={redo} disabled={!future.length}>
+            <Redo2 className="h-4 w-4 mr-1" />Redo
           </Button>
           <Button variant="destructive" size="sm" onClick={clearAll}>
             <Trash2 className="h-4 w-4 mr-1" />Clear All
