@@ -44,15 +44,16 @@ export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onCl
                 className="h-8 text-sm"
               />
             </div>
-            <div className="p-4 flex flex-col gap-2 overflow-y-auto flex-1">
+            <div className="p-4 grid grid-cols-2 gap-2 overflow-y-auto flex-1">
               {filtered.map((asset) => (
-                <div key={asset.id} className="relative group">
+                <div
+                  key={asset.id}
+                  className="relative group aspect-square overflow-hidden"
+                >
                   <img
                     src={asset.src}
                     alt={asset.name}
-                    width={asset.w}
-                    height={asset.h}
-                    className="max-w-full h-auto object-contain rounded-md cursor-grab"
+                    className="w-full h-full object-cover rounded-md cursor-grab"
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.setData("application/x-asset-id", asset.id);
