@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, LayoutGrid, Trash2 } from "lucide-react";
+import { LayoutGrid, Trash2 } from "lucide-react";
 
 const cx = (...cls) => cls.filter(Boolean).join(" ");
 
