@@ -539,24 +539,29 @@ export default function MethodMosaic() {
           <p className="text-sm text-neutral-500">Drop images • Paste • {canReorder ? "Drag tiles to reorder" : "Switch to Grid or Square to reorder"} • Reset order</p>
           <Card className="bg-transparent rounded-none shadow-none">
             <CardContent className="p-4 md:p-6">
-              <div className={cx("relative w-full min-h-[60vh] overflow-auto border border-neutral-200 dark:border-neutral-700", images.length === 0 ? "grid place-items-center" : "")} onDrop={onDrop} onDragOver={onDragOverBoard} onPaste={onPaste}>
-                {images.length === 0 && (<div className="text-center p-8"><div className="text-sm text-neutral-500 mb-3">Drop images here, paste from clipboard, or use “Add Images”.</div><Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Select Files</Button></div>)}
-                  <div
-                    className="relative"
-                    style={{ transform: `scale(${zoom/100})`, transformOrigin: "top left" }}
-                  >
-                    <div
-                      ref={boardRef}
-                      className="relative w-full"
-                      style={{
-                        background: bg,
-                        padding: boardPadding,
-                        width: boardWidth ? `${boardWidth}px` : undefined,
-                        height: boardHeight ? `${boardHeight}px` : undefined,
-                        aspectRatio: boardAspect,
-                      }}
-                    >
-                    {showText && (boardTitle || boardDescription || logoSrc) && (
+              <div
+                className={cx(
+                  "relative w-full min-h-[60vh] overflow-auto",
+                  images.length === 0 ? "grid place-items-center" : ""
+                )}
+                onDrop={onDrop}
+                onDragOver={onDragOverBoard}
+                onPaste={onPaste}
+              >
+                <div
+                  ref={boardRef}
+                  className="relative w-full min-h-[60vh] border border-neutral-200 dark:border-neutral-700"
+                  style={{
+                    transform: `scale(${zoom / 100})`,
+                    transformOrigin: "top left",
+                    background: bg,
+                    padding: boardPadding,
+                    width: boardWidth ? `${boardWidth}px` : undefined,
+                    height: boardHeight ? `${boardHeight}px` : undefined,
+                    aspectRatio: boardAspect,
+                  }}
+                >
+                  {showText && (boardTitle || boardDescription || logoSrc) && (
                       <header className="mb-6 flex items-center gap-3">
                         {logoSrc && (<img src={logoSrc} alt="logo" style={{ width: logoSize, height: logoSize, borderRadius: logoRounded ? "9999px" : "12px" }} className="shrink-0 object-cover" />)}
                         <div>
@@ -602,12 +607,19 @@ export default function MethodMosaic() {
                         </figure>
                       );
                     })}
-                    </div>
-                    {showSafeMargin && <SafeMarginOverlay targetRef={boardRef} />}
-                    </div>
                   </div>
-                  {exporting && (<div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/70 dark:bg-black/50 text-sm">Exporting…</div>)}
+                  {showSafeMargin && <SafeMarginOverlay targetRef={boardRef} />}
                 </div>
+                {images.length === 0 && (
+                  <div className="text-center p-8">
+                    <div className="text-sm text-neutral-500 mb-3">Drop images here, paste from clipboard, or use “Add Images”.</div>
+                    <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Select Files</Button>
+                  </div>
+                )}
+                {exporting && (
+                  <div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/70 dark:bg-black/50 text-sm">Exporting…</div>
+                )}
+              </div>
               </CardContent>
             </Card>
         </div>
