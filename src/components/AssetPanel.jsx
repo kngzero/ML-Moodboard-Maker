@@ -44,7 +44,7 @@ export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onCl
                 className="h-8 text-sm"
               />
             </div>
-            <div className="p-4 grid grid-cols-3 gap-2 flex-1">
+            <div className="p-4 grid grid-cols-3 gap-2">
               {filtered.map((asset) => (
                 <div
                   key={asset.id}
