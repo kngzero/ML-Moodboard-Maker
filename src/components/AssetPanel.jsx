@@ -14,10 +14,10 @@ export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onCl
   const filtered = assets.filter((a) => a.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <div className="fixed left-0 z-40 flex bottom-0 overflow-y-auto" style={{ top: "var(--header-height)" }}>
+    <div className="fixed left-0 z-40 flex bottom-0" style={{ top: "var(--header-height)" }}>
       <div
         className={cx(
-          "h-full flex flex-col bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700 transition-all overflow-hidden",
+          "h-full flex flex-col bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700 transition-all overflow-y-auto",
           open ? "w-64" : "w-0"
         )}
       >
@@ -25,7 +25,7 @@ export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onCl
           <>
             <div className="p-4 border-b border-neutral-200 dark:border-neutral-700">
               <div className="flex items-center justify-between mb-3 gap-2">
-                <h2 className="font-semibold">Assets</h2>
+                <h2 className="text-xl font-semibold">Assets</h2>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
