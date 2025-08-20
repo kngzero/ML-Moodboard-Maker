@@ -469,6 +469,33 @@ export default function MethodMosaic() {
     setTimeout(() => setGridCell(getCellPx()), 0);
   };
 
+  const resetSettings = useCallback(() => {
+    setBoardTitle("");
+    setBoardDescription("");
+    setShowText(true);
+    setLogoSrc(null);
+    setLogoSize(40);
+    setLogoRounded(true);
+    setGap(12);
+    setColumns(4);
+    setRows(3);
+    setLayoutMode("auto");
+    setRounded(true);
+    setShadow(true);
+    setShowSafeMargin(false);
+    setBoardPadding(24);
+    setSelectedTemplate("custom");
+    setBoardWidth(null);
+    setBoardHeight(null);
+    setBoardAspect(undefined);
+    setZoom(100);
+    setBg("#ffffff");
+    setBrandingOpen(true);
+    setLayoutOpen(true);
+    setExportFormat("png");
+    setTimeout(() => setGridCell(getCellPx()), 0);
+  }, []);
+
   const Header = () => (
     <header ref={headerRef} className="fixed top-0 left-0 w-full bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 z-50">
       <div className="mx-auto max-w-[1400px] flex items-center justify-between gap-4 px-4 md:px-6 lg:px-8 py-4">
@@ -628,7 +655,10 @@ export default function MethodMosaic() {
     <SettingsDrawer open={settingsOpen} onToggle={() => setSettingsOpen((v) => !v)}>
       <div className="h-full overflow-y-auto space-y-6">
         <div className="pb-2">
-          <h2 className="text-xl font-semibold">Moodboard Settings</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Moodboard Settings</h2>
+            <Button variant="ghost" size="sm" onClick={resetSettings}>Reset</Button>
+          </div>
         </div>
         <div className="space-y-6">
           <div className="space-y-4">
