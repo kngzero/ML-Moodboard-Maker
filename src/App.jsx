@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
-import { LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X, Archive, ArchiveRestore, Undo2, Redo2 } from "lucide-react";
+import { LayoutGrid, GripVertical, Download, FileDown, Upload, ImagePlus, RotateCcw, Trash2, Image as ImageIcon, ChevronDown, ChevronRight, HelpCircle, X, Archive, ArchiveRestore, Undo2, Redo2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -675,9 +675,6 @@ export default function MethodMosaic() {
           <Button variant="outline" size="sm" onClick={addFromUrl}>
             <ImagePlus className="h-4 w-4 mr-1" />From URL
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setReviewOpen(true)}>
-            Leave Review
-          </Button>
           <Button variant="ghost" size="sm" onClick={resetOrder}>
             <RotateCcw className="h-4 w-4 mr-1" />Reset Order
           </Button>
@@ -689,6 +686,14 @@ export default function MethodMosaic() {
           </Button>
           <Button variant="destructive" size="sm" onClick={clearAll}>
             <Trash2 className="h-4 w-4 mr-1" />Clear All
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setReviewOpen(true)}
+            aria-label="Leave review"
+          >
+            <Star className="h-4 w-4" />
           </Button>
           <div className="relative">
             <Button
