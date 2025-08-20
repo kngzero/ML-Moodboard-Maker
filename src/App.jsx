@@ -33,6 +33,33 @@ const withDefaultCrop = (img) => ({
   },
 });
 
+const BRANDING_PRESETS = {
+  "left-s": {
+    header: "flex items-center gap-3 text-left",
+    logo: 32,
+    title: "text-xl",
+    desc: "text-xs",
+  },
+  "left-m": {
+    header: "flex items-center gap-3 text-left",
+    logo: 40,
+    title: "text-2xl",
+    desc: "text-sm",
+  },
+  "center-s": {
+    header: "flex flex-col items-center gap-3 text-center",
+    logo: 32,
+    title: "text-xl",
+    desc: "text-xs",
+  },
+  "center-m": {
+    header: "flex flex-col items-center gap-3 text-center",
+    logo: 40,
+    title: "text-2xl",
+    desc: "text-sm",
+  },
+};
+
 export default function MethodMosaic() {
   const [images, setImages] = useState(/** @type {BoardImage[]} */([]));
   const [assets, setAssets] = useState([]);
@@ -50,9 +77,12 @@ export default function MethodMosaic() {
   const [boardDescription, setBoardDescription] = useState("");
   const [showText, setShowText] = useState(true);
   const [logoSrc, setLogoSrc] = useState(null);
-  const [logoSize, setLogoSize] = useState(40);
+  const [logoSize, setLogoSize] = useState(BRANDING_PRESETS["left-m"].logo);
   const [logoRounded, setLogoRounded] = useState(true);
   const logoInputRef = useRef(null);
+  const [brandingPreset, setBrandingPreset] = useState("left-m");
+  const [titleClass, setTitleClass] = useState(BRANDING_PRESETS["left-m"].title);
+  const [descClass, setDescClass] = useState(BRANDING_PRESETS["left-m"].desc);
   const [gap, setGap] = useState(12);
   const [columns, setColumns] = useState(4);
   const [rows, setRows] = useState(3);
@@ -106,6 +136,15 @@ export default function MethodMosaic() {
       }
     }
   }, [assets]);
+
+  useEffect(() => {
+    const preset = BRANDING_PRESETS[brandingPreset];
+    if (preset) {
+      setLogoSize(preset.logo);
+      setTitleClass(preset.title);
+      setDescClass(preset.desc);
+    }
+  }, [brandingPreset]);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -589,11 +628,22 @@ export default function MethodMosaic() {
                   }}
                 >
                   {showText && (boardTitle || boardDescription || logoSrc) && (
-                      <header className="mb-6 flex items-center gap-3">
-                        {logoSrc && (<img src={logoSrc} alt="logo" style={{ width: logoSize, height: logoSize, borderRadius: logoRounded ? "9999px" : "12px" }} className="shrink-0 object-cover" />)}
-                        <div>
-                        {boardTitle && <h2 className="text-2xl font-semibold leading-tight mb-1">{boardTitle}</h2>}
-                        {boardDescription && <p className="text-sm text-neutral-600 dark:text-neutral-300">{boardDescription}</p>}
+                    <header className={cx("mb-6", BRANDING_PRESETS[brandingPreset].header)}>
+                      {logoSrc && (
+                        <img
+                          src={logoSrc}
+                          alt="logo"
+                          style={{ width: logoSize, height: logoSize, borderRadius: logoRounded ? "9999px" : "12px" }}
+                          className="shrink-0 object-cover"
+                        />
+                      )}
+                      <div>
+                        {boardTitle && (
+                          <h2 className={cx(titleClass, "font-semibold leading-tight mb-1")}>{boardTitle}</h2>
+                        )}
+                        {boardDescription && (
+                          <p className={cx(descClass, "text-neutral-600 dark:text-neutral-300")}>{boardDescription}</p>
+                        )}
                       </div>
                     </header>
                   )}
@@ -681,6 +731,19 @@ export default function MethodMosaic() {
                 <div className="space-y-3">
                   <Input placeholder="Board title" value={boardTitle} onChange={(e) => setBoardTitle(e.target.value)} />
                   <Input placeholder="Short description" value={boardDescription} onChange={(e) => setBoardDescription(e.target.value)} />
+                  <div className="space-y-2">
+                    <Label className="text-sm">Preset</Label>
+                    <select
+                      className="input"
+                      value={brandingPreset}
+                      onChange={(e) => setBrandingPreset(e.target.value)}
+                    >
+                      <option value="left-s">Left S</option>
+                      <option value="left-m">Left M</option>
+                      <option value="center-s">Center S</option>
+                      <option value="center-m">Center M</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex gap-2">
