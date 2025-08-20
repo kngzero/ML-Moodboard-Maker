@@ -6,7 +6,7 @@ import { ChevronLeft, LayoutGrid, Trash2 } from "lucide-react";
 const cx = (...cls) => cls.filter(Boolean).join(" ");
 
 /**
- * @typedef {{id:string, src:string, name:string}} Asset
+ * @typedef {{id:string, src:string, name:string, w?:number, h?:number}} Asset
  */
 
 export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onClearAssets }) {
@@ -44,13 +44,15 @@ export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onCl
                 className="h-8 text-sm"
               />
             </div>
-            <div className="p-4 grid grid-cols-2 gap-2 overflow-y-auto flex-1">
+            <div className="p-4 flex flex-col gap-2 overflow-y-auto flex-1">
               {filtered.map((asset) => (
                 <div key={asset.id} className="relative group">
                   <img
                     src={asset.src}
                     alt={asset.name}
-                    className="w-full h-24 object-cover rounded-md cursor-grab"
+                    width={asset.w}
+                    height={asset.h}
+                    className="max-w-full h-auto object-contain rounded-md cursor-grab"
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.setData("application/x-asset-id", asset.id);
@@ -69,7 +71,7 @@ export default function AssetPanel({ assets, open, onToggle, onRemoveAsset, onCl
                 </div>
               ))}
               {filtered.length === 0 && (
-                <p className="col-span-2 text-sm text-neutral-500">No assets</p>
+                <p className="text-sm text-neutral-500">No assets</p>
               )}
             </div>
           </>
